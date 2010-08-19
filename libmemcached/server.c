@@ -122,6 +122,9 @@ void memcached_server_free(memcached_server_st *self)
   {
     self->options.is_initialized= false;
   }
+
+  if (self->pending_ops)
+    free(self->pending_ops);
 }
 
 /*
