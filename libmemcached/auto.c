@@ -43,7 +43,7 @@ static memcached_return_t text_incr_decr(memcached_st *ptr,
   unlikely (send_length >= MEMCACHED_DEFAULT_COMMAND_SIZE)
     return MEMCACHED_WRITE_FAILURE;
 
-  rc= memcached_do(instance, buffer, send_length, true);
+  rc= memcached_do(instance, buffer, send_length, true, 0);
   if (no_reply || rc != MEMCACHED_SUCCESS)
     return rc;
 
@@ -112,6 +112,7 @@ static memcached_return_t binary_incr_decr(memcached_st *ptr, uint8_t cmd,
   request.message.header.request.extlen= 20;
   request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
   request.message.header.request.bodylen= htonl((uint32_t)(key_length + ptr->prefix_key_length +  request.message.header.request.extlen));
+  request.message.header.request.opaque= ++ptr->opaque_seed;
   request.message.body.delta= htonll(offset);
   request.message.body.initial= htonll(initial);
   request.message.body.expiration= htonl((uint32_t) expiration);
@@ -124,7 +125,7 @@ static memcached_return_t binary_incr_decr(memcached_st *ptr, uint8_t cmd,
   }; 
 
   memcached_return_t rc;
-  if ((rc= memcached_vdo(instance, vector, 3, true)) != MEMCACHED_SUCCESS)
+  if ((rc= memcached_vdo(instance, vector, 3, true, request.message.header.request.opaque)) != MEMCACHED_SUCCESS)
   {
     memcached_io_reset(instance);
     return (rc == MEMCACHED_SUCCESS) ? MEMCACHED_WRITE_FAILURE : rc;

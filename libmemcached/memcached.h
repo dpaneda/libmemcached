@@ -83,6 +83,7 @@ struct memcached_st {
     bool use_udp:1;
     bool verify_key:1;
     bool tcp_keepalive:1;
+    bool check_opaque:1;
   } flags;
   memcached_server_distribution_t distribution;
   hashkit_st hashkit;
@@ -130,6 +131,7 @@ struct memcached_st {
   struct {
     bool is_allocated:1;
   } options;
+  uint32_t opaque_seed;
 
 };
 

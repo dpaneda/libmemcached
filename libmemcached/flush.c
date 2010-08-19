@@ -43,7 +43,7 @@ static memcached_return_t memcached_flush_textual(memcached_st *ptr,
       send_length= (size_t) snprintf(buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, 
                                      "flush_all%s\r\n", no_reply ? " noreply" : "");
 
-    rc= memcached_do(instance, buffer, send_length, true);
+    rc= memcached_do(instance, buffer, send_length, true, 0);
 
     if (rc == MEMCACHED_SUCCESS && !no_reply)
       (void)memcached_response(instance, buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, NULL);
@@ -65,6 +65,7 @@ static memcached_return_t memcached_flush_binary(memcached_st *ptr,
   request.message.header.request.extlen= 4;
   request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
   request.message.header.request.bodylen= htonl(request.message.header.request.extlen);
+  request.message.header.request.opaque= ++ptr->opaque_seed;
   request.message.body.expiration= htonl((uint32_t) expiration);
 
   for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
@@ -81,7 +82,7 @@ static memcached_return_t memcached_flush_binary(memcached_st *ptr,
       request.message.header.request.opcode= PROTOCOL_BINARY_CMD_FLUSH;
     }
 
-    if (memcached_do(instance, request.bytes, sizeof(request.bytes), true) != MEMCACHED_SUCCESS) 
+    if (memcached_do(instance, request.bytes, sizeof(request.bytes), true, request.message.header.request.opaque) != MEMCACHED_SUCCESS) 
     {
       memcached_io_reset(instance);
       return MEMCACHED_WRITE_FAILURE;

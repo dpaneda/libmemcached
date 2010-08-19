@@ -229,6 +229,16 @@ memcached_return_t memcached_behavior_set(memcached_st *ptr,
         }
       }
       break;
+  case MEMCACHED_BEHAVIOR_CHECK_OPAQUE:
+    ptr->flags.check_opaque= set_flag(data);
+    if (data)
+    {
+      ptr->flags.verify_key= false;
+      ptr->flags.binary_protocol= true;
+    }
+    ptr->flags.binary_protocol= set_flag(data);
+    memcached_quit(ptr); // We need to shutdown all of the connections to make sure we do the correct protocol
+    break;
   case MEMCACHED_BEHAVIOR_MAX:
   default:
     /* Shouldn't get here */
@@ -366,6 +376,8 @@ uint64_t memcached_behavior_get(memcached_st *ptr,
     return ptr->flags.cork;
   case MEMCACHED_BEHAVIOR_TCP_KEEPALIVE:
     return ptr->flags.tcp_keepalive;
+  case MEMCACHED_BEHAVIOR_CHECK_OPAQUE:
+    return ptr->flags.check_opaque;
   case MEMCACHED_BEHAVIOR_MAX:
   default:
     WATCHPOINT_ASSERT(0); /* Programming mistake if it gets this far */

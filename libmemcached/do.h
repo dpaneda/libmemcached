@@ -20,12 +20,12 @@ LIBMEMCACHED_LOCAL
 memcached_return_t memcached_do(memcached_server_write_instance_st ptr, 
                                 const void *commmand,
                                 size_t command_length,
-                                bool with_flush);
+                                bool with_flush, uint32_t opaque);
 
 LIBMEMCACHED_LOCAL
 memcached_return_t memcached_vdo(memcached_server_write_instance_st ptr,
                                  const struct __write_vector_st *vector, size_t count,
-                                 bool with_flush);
+                                 bool with_flush, uint32_t opaque);
 
 #ifdef __cplusplus
 }

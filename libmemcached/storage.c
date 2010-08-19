@@ -172,7 +172,7 @@ static inline memcached_return_t memcached_send(memcached_st *ptr,
       }
 
       /* Send command header */
-      rc=  memcached_vdo(instance, vector, 3, to_write);
+      rc=  memcached_vdo(instance, vector, 3, to_write, 0);
       if (rc == MEMCACHED_SUCCESS)
       {
 
@@ -461,6 +461,7 @@ static memcached_return_t memcached_send_binary(memcached_st *ptr,
   request.message.header.request.opcode= get_com_code(verb, noreply);
   request.message.header.request.keylen= htons((uint16_t)(key_length + ptr->prefix_key_length));
   request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
+  request.message.header.request.opaque= ++ptr->opaque_seed;
   if (verb == APPEND_OP || verb == PREPEND_OP)
     send_length -= 8; /* append & prepend does not contain extras! */
   else
@@ -502,7 +503,7 @@ static memcached_return_t memcached_send_binary(memcached_st *ptr,
 
   /* write the header */
   memcached_return_t rc;
-  if ((rc= memcached_vdo(server, vector, 4, flush)) != MEMCACHED_SUCCESS)
+  if ((rc= memcached_vdo(server, vector, 4, flush, request.message.header.request.opaque)) != MEMCACHED_SUCCESS)
   {
     memcached_io_reset(server);
     return (rc == MEMCACHED_SUCCESS) ? MEMCACHED_WRITE_FAILURE : rc;
@@ -523,13 +524,13 @@ static memcached_return_t memcached_send_binary(memcached_st *ptr,
 
       instance= memcached_server_instance_fetch(ptr, server_key);
 
-      if (memcached_vdo(instance, vector, 4, false) != MEMCACHED_SUCCESS)
+      if (memcached_vdo(instance, vector, 4, false, request.message.header.request.opaque) != MEMCACHED_SUCCESS)
       {
         memcached_io_reset(instance);
       }
       else
       {
-        memcached_server_response_decrement(instance);
+	memcached_server_response_decrement(instance, request.message.header.request.opaque);
       }
     }
   }

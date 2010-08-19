@@ -36,7 +36,7 @@ static inline memcached_return_t memcached_version_textual(memcached_st *ptr)
     memcached_server_write_instance_st instance=
       memcached_server_instance_fetch(ptr, x);
 
-    rrc= memcached_do(instance, command, send_length, true);
+    rrc= memcached_do(instance, command, send_length, true, 0);
     if (rrc != MEMCACHED_SUCCESS)
     {
       rc= MEMCACHED_SOME_ERRORS;
@@ -73,6 +73,7 @@ static inline memcached_return_t memcached_version_binary(memcached_st *ptr)
   request.message.header.request.magic= PROTOCOL_BINARY_REQ;
   request.message.header.request.opcode= PROTOCOL_BINARY_CMD_VERSION;
   request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
+  request.message.header.request.opaque= ++ptr->opaque_seed;
 
   rc= MEMCACHED_SUCCESS;
   for (uint32_t x= 0; x < memcached_server_count(ptr); x++) 
@@ -82,7 +83,7 @@ static inline memcached_return_t memcached_version_binary(memcached_st *ptr)
     memcached_server_write_instance_st instance=
       memcached_server_instance_fetch(ptr, x);
 
-    rrc= memcached_do(instance, request.bytes, sizeof(request.bytes), true);
+    rrc= memcached_do(instance, request.bytes, sizeof(request.bytes), true, request.message.header.request.opaque);
     if (rrc != MEMCACHED_SUCCESS) 
     {
       memcached_io_reset(instance);

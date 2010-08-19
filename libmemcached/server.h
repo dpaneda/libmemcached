@@ -22,6 +22,7 @@ struct memcached_server_st {
   } options;
   uint32_t number_of_hosts;
   uint32_t cursor_active;
+  uint32_t *pending_ops; // opaque field of pending ops
   in_port_t port;
   int cached_errno;
   int fd;
@@ -47,7 +48,7 @@ struct memcached_server_st {
   size_t write_buffer_offset;
   struct addrinfo *address_info;
   time_t next_retry;
-  const memcached_st *root;
+  memcached_st *root;
   uint64_t limit_maxbytes;
   char read_buffer[MEMCACHED_MAX_BUFFER];
   char write_buffer[MEMCACHED_MAX_BUFFER];

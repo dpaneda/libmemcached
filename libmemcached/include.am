@@ -111,7 +111,8 @@ libmemcached_libmemcached_la_SOURCES = \
 				       libmemcached/storage.c \
 				       libmemcached/strerror.c \
 				       libmemcached/verbosity.c \
-				       libmemcached/version.c
+				       libmemcached/version.c \
+				       libmemcached/opaque.c
 
 
 libmemcached_libmemcached_la_DEPENDENCIES= libmemcached/libmemcachedcallbacks.la libmemcached/libmemcachedinternal.la libhashkit/libhashkitinc.la

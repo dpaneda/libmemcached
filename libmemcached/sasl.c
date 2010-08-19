@@ -78,6 +78,7 @@ memcached_return_t memcached_sasl_authenticate_connection(memcached_server_st *s
     .message.header.request= {
       .magic= PROTOCOL_BINARY_REQ,
       .opcode= PROTOCOL_BINARY_CMD_SASL_LIST_MECHS
+      .opaque= ++server->root->opaque_seed;
     }
   };
 
@@ -87,7 +88,7 @@ memcached_return_t memcached_sasl_authenticate_connection(memcached_server_st *s
     return MEMCACHED_WRITE_FAILURE;
   }
 
-  memcached_server_response_increment(server);
+  memcached_server_response_increment(server, request.message.request.opaque);
 
   char mech[MEMCACHED_MAX_BUFFER];
   rc= memcached_response(server, mech, sizeof(mech), NULL);
@@ -140,6 +141,7 @@ memcached_return_t memcached_sasl_authenticate_connection(memcached_server_st *s
   request.message.header.request.opcode= PROTOCOL_BINARY_CMD_SASL_AUTH;
   request.message.header.request.keylen= htons(keylen);
   request.message.header.request.bodylen= htonl(len + keylen);
+  request.message.header.request.opaque= ++server->root->opaque_seed;
 
   do {
     /* send the packet */
@@ -156,7 +158,7 @@ memcached_return_t memcached_sasl_authenticate_connection(memcached_server_st *s
       rc= MEMCACHED_WRITE_FAILURE;
       goto end;
     }
-    memcached_server_response_increment(server);
+    memcached_server_response_increment(server, request.message.request.opaque);
 
     /* read the response */
     rc= memcached_response(server, NULL, 0, NULL);

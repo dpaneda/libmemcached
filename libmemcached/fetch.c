@@ -53,11 +53,17 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
     *error= MEMCACHED_NOT_SUPPORTED;
     return NULL;
   }
+  unlikely (memcached_server_count(ptr) == 0)
+  {
+    *error= MEMCACHED_NO_SERVERS;
+    return NULL;
+  }
 
   if (result == NULL)
     if ((result= memcached_result_create(ptr, NULL)) == NULL)
       return NULL;
 
+  *error = MEMCACHED_END;
   while ((server= memcached_io_get_readable_server(ptr)) != NULL) 
   {
     char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
@@ -69,6 +75,7 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
       memcached_server_response_reset(server);
     else if (*error != MEMCACHED_NOTFOUND)
       break;
+    *error = MEMCACHED_END;
   }
 
   /* We have completed reading data */

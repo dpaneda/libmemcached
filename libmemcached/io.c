@@ -333,7 +333,8 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
 
       difference= (length > ptr->read_buffer_length) ? ptr->read_buffer_length : length;
 
-      memcpy(buffer_ptr, ptr->read_ptr, difference);
+      if (buffer)
+        memcpy(buffer_ptr, ptr->read_ptr, difference);
       length -= difference;
       ptr->read_ptr+= difference;
       ptr->read_buffer_length-= difference;
@@ -341,7 +342,8 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
     }
     else
     {
-      *buffer_ptr= *ptr->read_ptr;
+      if (buffer)
+        *buffer_ptr= *ptr->read_ptr;
       ptr->read_ptr++;
       ptr->read_buffer_length--;
       buffer_ptr++;

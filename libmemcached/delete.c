@@ -12,7 +12,8 @@ static inline memcached_return_t binary_delete(memcached_st *ptr,
                                                uint32_t server_key,
                                                const char *key,
                                                size_t key_length,
-                                               bool flush);
+                                               bool flush,
+                                               uint32_t *opaque);
 
 memcached_return_t memcached_delete_by_key(memcached_st *ptr,
                                            const char *master_key, size_t master_key_length,
@@ -25,6 +26,7 @@ memcached_return_t memcached_delete_by_key(memcached_st *ptr,
   char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
   uint32_t server_key;
   memcached_server_write_instance_st instance;
+  uint32_t opaque = 0;
 
   LIBMEMCACHED_MEMCACHED_DELETE_START();
 
@@ -47,7 +49,7 @@ memcached_return_t memcached_delete_by_key(memcached_st *ptr,
   {
     likely (! expiration)
     {
-      rc= binary_delete(ptr, server_key, key, key_length, to_write);
+      rc= binary_delete(ptr, server_key, key, key_length, to_write, &opaque);
     }
     else
     {
@@ -85,7 +87,7 @@ memcached_return_t memcached_delete_by_key(memcached_st *ptr,
                  */
                 to_write= true;
                 if (no_reply)
-                   memcached_server_response_increment(instance);
+                   memcached_server_response_increment(instance, opaque);
                 no_reply= false;
              }
           }
@@ -121,7 +123,7 @@ memcached_return_t memcached_delete_by_key(memcached_st *ptr,
         memcached_io_write(instance, NULL, 0, true);
     }
 
-    rc= memcached_do(instance, buffer, send_length, to_write);
+    rc= memcached_do(instance, buffer, send_length, to_write, opaque);
   }
 
   if (rc != MEMCACHED_SUCCESS)
@@ -150,7 +152,8 @@ static inline memcached_return_t binary_delete(memcached_st *ptr,
                                                uint32_t server_key,
                                                const char *key,
                                                size_t key_length,
-                                               bool flush)
+                                               bool flush,
+                                               uint32_t *opaque)
 {
   memcached_server_write_instance_st instance;
   protocol_binary_request_delete request= {.bytes= {0}};
@@ -165,6 +168,8 @@ static inline memcached_return_t binary_delete(memcached_st *ptr,
   request.message.header.request.keylen= htons((uint16_t)(key_length + ptr->prefix_key_length));
   request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
   request.message.header.request.bodylen= htonl((uint32_t)(key_length + ptr->prefix_key_length));
+  *opaque= ++ptr->opaque_seed;
+  request.message.header.request.opaque= *opaque;
 
   if (ptr->flags.use_udp && ! flush)
   {
@@ -184,7 +189,7 @@ static inline memcached_return_t binary_delete(memcached_st *ptr,
 
   memcached_return_t rc= MEMCACHED_SUCCESS;
 
-  if ((rc= memcached_vdo(instance, vector,  3, flush)) != MEMCACHED_SUCCESS)
+  if ((rc= memcached_vdo(instance, vector,  3, flush, request.message.header.request.opaque)) != MEMCACHED_SUCCESS)
   {
     memcached_io_reset(instance);
     rc= (rc == MEMCACHED_SUCCESS) ? MEMCACHED_WRITE_FAILURE : rc;
@@ -204,13 +209,13 @@ static inline memcached_return_t binary_delete(memcached_st *ptr,
 
       replica= memcached_server_instance_fetch(ptr, server_key);
 
-      if (memcached_vdo(replica, vector, 3, flush) != MEMCACHED_SUCCESS)
+      if (memcached_vdo(replica, vector, 3, flush, request.message.header.request.opaque) != MEMCACHED_SUCCESS)
       {
         memcached_io_reset(replica);
       }
       else
       {
-        memcached_server_response_decrement(replica);
+	memcached_server_response_decrement(replica, request.message.header.request.opaque);
       }
     }
   }

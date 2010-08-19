@@ -3733,6 +3733,21 @@ static test_return_t pre_binary(memcached_st *memc)
   return rc == MEMCACHED_SUCCESS ? TEST_SUCCESS : TEST_SKIPPED;
 }
 
+static test_return_t pre_binary_opaque(memcached_st *memc)
+{
+  memcached_return_t rc= MEMCACHED_FAILURE;
+
+  if (libmemcached_util_version_check(memc, 1, 3, 0))
+  {
+    rc = memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL, 1);
+    rc = memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_CHECK_OPAQUE, 1);
+    test_true(rc == MEMCACHED_SUCCESS);
+    test_true(memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL) == 1);
+  }
+
+  return rc == MEMCACHED_SUCCESS ? TEST_SUCCESS : TEST_SKIPPED;
+}
+
 static test_return_t pre_sasl(memcached_st *memc)
 {
   memcached_return_t rc= MEMCACHED_FAILURE;
@@ -6323,6 +6338,7 @@ collection_st collection[] ={
   {"hsieh_availability", 0, 0, hsieh_availability},
   {"block", 0, 0, tests},
   {"binary", (test_callback_fn)pre_binary, 0, tests},
+  {"binary_opaque", (test_callback_fn)pre_binary_opaque, 0, tests},
   {"nonblock", (test_callback_fn)pre_nonblock, 0, tests},
   {"nodelay", (test_callback_fn)pre_nodelay, 0, tests},
   {"settimer", (test_callback_fn)pre_settimer, 0, tests},

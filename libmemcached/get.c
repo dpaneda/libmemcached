@@ -40,7 +40,7 @@ char *memcached_get_by_key(memcached_st *ptr,
                            uint32_t *flags,
                            memcached_return_t *error)
 {
-  char *value;
+  char *value = NULL;
   size_t dummy_length;
   uint32_t dummy_flags;
   memcached_return_t dummy_error;
@@ -56,6 +56,11 @@ char *memcached_get_by_key(memcached_st *ptr,
                                      (const char * const *)&key,
                                      &key_length, 1, false);
 
+  unlikely (*error != MEMCACHED_SUCCESS)
+  {
+    *value_length = 0;
+    return NULL;
+  }
   value= memcached_fetch(ptr, NULL, NULL,
                          value_length, flags, error);
   /* This is for historical reasons */
@@ -248,9 +253,12 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
         rc= MEMCACHED_SOME_ERRORS;
         continue;
       }
-      WATCHPOINT_ASSERT(instance->cursor_active == 0);
-      memcached_server_response_increment(instance);
-      WATCHPOINT_ASSERT(instance->cursor_active == 1);
+      if (!ptr->flags.check_opaque)
+      {
+        WATCHPOINT_ASSERT(instance->cursor_active == 0);
+        memcached_server_response_increment(instance, 0);
+        WATCHPOINT_ASSERT(instance->cursor_active == 1);
+      }
     }
     else
     {
@@ -377,7 +385,8 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
 
     protocol_binary_request_getk request= {.bytes= {0}};
     request.message.header.request.magic= PROTOCOL_BINARY_REQ;
-    if (mget_mode)
+    request.message.header.request.opaque= ++ptr->opaque_seed;
+    if (mget_mode && !ptr->flags.check_opaque)
       request.message.header.request.opcode= PROTOCOL_BINARY_CMD_GETKQ;
     else
       request.message.header.request.opcode= PROTOCOL_BINARY_CMD_GETK;
@@ -413,9 +422,14 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
       continue;
     }
 
-    /* We just want one pending response per server */
-    memcached_server_response_reset(instance);
-    memcached_server_response_increment(instance);
+    if (ptr->flags.check_opaque)
+    {
+      memcached_server_response_increment(instance, request.message.header.request.opaque);
+    } else {
+      /* We just want one pending response per server */
+      memcached_server_response_reset(instance);
+      memcached_server_response_increment(instance, 0);
+    }
     if ((x > 0 && x == ptr->io_key_prefetch) && memcached_flush_buffers(ptr) != MEMCACHED_SUCCESS)
     {
       rc= MEMCACHED_SOME_ERRORS;
@@ -424,14 +438,6 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
 
   if (mget_mode)
   {
-    /*
-     * Send a noop command to flush the buffers
-   */
-    protocol_binary_request_noop request= {.bytes= {0}};
-    request.message.header.request.magic= PROTOCOL_BINARY_REQ;
-    request.message.header.request.opcode= PROTOCOL_BINARY_CMD_NOOP;
-    request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
-
     for (uint32_t x= 0; x < memcached_server_count(ptr); ++x)
     {
       memcached_server_write_instance_st instance=
@@ -444,14 +450,24 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
           memcached_server_response_reset(instance);
           memcached_io_reset(instance);
           rc= MEMCACHED_SOME_ERRORS;
-        }
-
-        if (memcached_io_write(instance, request.bytes,
-                               sizeof(request.bytes), true) == -1)
+        } else if (!ptr->flags.check_opaque)
         {
-          memcached_server_response_reset(instance);
-          memcached_io_reset(instance);
-          rc= MEMCACHED_SOME_ERRORS;
+          /*
+           * Send a noop command to flush the buffers
+           */
+          protocol_binary_request_noop request= {.bytes= {0}};
+          request.message.header.request.magic= PROTOCOL_BINARY_REQ;
+          request.message.header.request.opcode= PROTOCOL_BINARY_CMD_NOOP;
+          request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
+          request.message.header.request.opaque= ++ptr->opaque_seed;
+
+          if (memcached_io_write(instance, request.bytes,
+                                 sizeof(request.bytes), true) == -1)
+          {
+            memcached_server_response_reset(instance);
+            memcached_io_reset(instance);
+            rc= MEMCACHED_SOME_ERRORS;
+          }
         }
       }
     }
@@ -519,7 +535,8 @@ static memcached_return_t replication_binary_mget(memcached_st *ptr,
           .opcode= PROTOCOL_BINARY_CMD_GETK,
           .keylen= htons((uint16_t)(key_length[x] + ptr->prefix_key_length)),
           .datatype= PROTOCOL_BINARY_RAW_BYTES,
-          .bodylen= htonl((uint32_t)(key_length[x] + ptr->prefix_key_length))
+          .bodylen= htonl((uint32_t)(key_length[x] + ptr->prefix_key_length)),
+          .opaque= ++ptr->opaque_seed
         }
       };
 
@@ -548,7 +565,10 @@ static memcached_return_t replication_binary_mget(memcached_st *ptr,
         continue;
       }
 
-      memcached_server_response_increment(instance);
+      if (!ptr->flags.check_opaque)
+      {
+        memcached_server_response_increment(instance, 0);
+      }
       hash[x]= memcached_server_count(ptr);
     }
 

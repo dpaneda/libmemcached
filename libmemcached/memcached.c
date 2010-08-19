@@ -34,7 +34,8 @@ static const memcached_st global_copy= {
     .use_sort_hosts= false,
     .use_udp= false,
     .verify_key= false,
-    .tcp_keepalive= false
+    .tcp_keepalive= false,
+    .check_opaque= false
   }
 };
 
@@ -93,6 +94,7 @@ static inline bool _memcached_init(memcached_st *self)
   self->delete_trigger= NULL;
   self->callbacks= NULL;
   self->sasl= NULL;
+  self->opaque_seed = random();
 
   return true;
 }

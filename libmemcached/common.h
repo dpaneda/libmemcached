@@ -109,9 +109,12 @@ memcached_return_t memcached_connect(memcached_server_write_instance_st ptr);
 LIBMEMCACHED_LOCAL
 memcached_return_t run_distribution(memcached_st *ptr);
 
-#define memcached_server_response_increment(A) (A)->cursor_active++
-#define memcached_server_response_decrement(A) (A)->cursor_active--
-#define memcached_server_response_reset(A) (A)->cursor_active=0
+LIBMEMCACHED_LOCAL
+void memcached_server_response_increment(memcached_server_write_instance_st instance, uint32_t opaque);
+LIBMEMCACHED_LOCAL
+bool memcached_server_response_decrement(memcached_server_write_instance_st instance, uint32_t opaque);
+LIBMEMCACHED_LOCAL
+void memcached_server_response_reset(memcached_server_write_instance_st instance);
 
 // These are private 
 #define memcached_is_allocated(__object) ((__object)->options.is_allocated)
@@ -135,7 +138,7 @@ LIBMEMCACHED_LOCAL
 memcached_return_t memcached_purge(memcached_server_write_instance_st ptr);
 
 LIBMEMCACHED_LOCAL
-memcached_server_st *memcached_server_create_with(const memcached_st *memc,
+memcached_server_st *memcached_server_create_with(memcached_st *memc,
                                                   memcached_server_write_instance_st host,
                                                   const char *hostname,
                                                   in_port_t port,

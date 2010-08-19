@@ -22,8 +22,6 @@ memcached_return_t memcached_read_one_response(memcached_server_write_instance_s
                                                char *buffer, size_t buffer_length,
                                                memcached_result_st *result)
 {
-  memcached_server_response_decrement(ptr);
-
   if (result == NULL)
   {
     memcached_st *root= (memcached_st *)ptr->root;
@@ -218,13 +216,18 @@ static memcached_return_t textual_read_one_response(memcached_server_write_insta
   if (rc != MEMCACHED_SUCCESS)
     return rc;
 
+  if (!memcached_server_response_decrement(ptr, 0))
+  {
+    return MEMCACHED_PROTOCOL_ERROR;
+  }
+
   switch(buffer[0])
   {
   case 'V': /* VALUE || VERSION */
     if (buffer[1] == 'A') /* VALUE */
     {
       /* We add back in one because we will need to search for END */
-      memcached_server_response_increment(ptr);
+      memcached_server_response_increment(ptr, 0);
       return textual_value_fetch(ptr, buffer, result);
     }
     else if (buffer[1] == 'E') /* VERSION */
@@ -242,7 +245,7 @@ static memcached_return_t textual_read_one_response(memcached_server_write_insta
     {
       if (buffer[2] == 'A') /* STORED STATS */
       {
-        memcached_server_response_increment(ptr);
+        memcached_server_response_increment(ptr, 0);
         return MEMCACHED_STAT;
       }
       else if (buffer[1] == 'E') /* SERVER_ERROR */
@@ -314,7 +317,7 @@ static memcached_return_t textual_read_one_response(memcached_server_write_insta
     }
   case 'I': /* CLIENT ERROR */
     /* We add back in one because we will need to search for END */
-    memcached_server_response_increment(ptr);
+    memcached_server_response_increment(ptr, 0);
     return MEMCACHED_ITEM;
   case 'C': /* CLIENT ERROR */
     return MEMCACHED_CLIENT_ERROR;
@@ -340,15 +343,25 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
   memcached_return_t rc;
   protocol_binary_response_header header;
 
-  if ((rc= memcached_safe_read(ptr, &header.bytes, sizeof(header.bytes))) != MEMCACHED_SUCCESS)
+  for (;;)
   {
-    WATCHPOINT_ERROR(rc);
-    return rc;
-  }
+    if ((rc= memcached_safe_read(ptr, &header.bytes, sizeof(header.bytes))) != MEMCACHED_SUCCESS)
+    {
+      WATCHPOINT_ERROR(rc);
+      return rc;
+    }
 
-  if (header.response.magic != PROTOCOL_BINARY_RES)
-  {
-    return MEMCACHED_PROTOCOL_ERROR;
+    if (header.response.magic != PROTOCOL_BINARY_RES)
+    {
+      return MEMCACHED_PROTOCOL_ERROR;
+    }
+
+    if (memcached_server_response_decrement(ptr, header.response.opaque))
+    {
+      break;
+    } else {
+      memcached_safe_read(ptr, NULL, ntohl(header.response.bodylen));
+    }
   }
 
   /*
@@ -370,7 +383,10 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
        * We didn't increment the response counter for the GETKQ packet
        * (only the final NOOP), so we need to increment the counter again.
        */
-      memcached_server_response_increment(ptr);
+      if (!ptr->root->flags.check_opaque)
+      {
+        memcached_server_response_increment(ptr, 0);
+      }
       /* FALLTHROUGH */
     case PROTOCOL_BINARY_CMD_GETK:
       {
@@ -481,6 +497,10 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
             WATCHPOINT_ERROR(rc);
             return MEMCACHED_UNKNOWN_READ_FAILURE;
           }
+	  if (header.response.keylen > 0)
+	  {
+	    memcached_server_response_increment(ptr, header.response.opaque);
+	  }
         }
       }
       break;
@@ -539,6 +559,8 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
     case PROTOCOL_BINARY_CMD_REPLACEQ:
     case PROTOCOL_BINARY_CMD_APPENDQ:
     case PROTOCOL_BINARY_CMD_PREPENDQ:
+      if (!ptr->root->flags.check_opaque)
+         memcached_server_response_increment(ptr, 0);
       return binary_read_one_response(ptr, buffer, buffer_length, result);
     default:
       break;

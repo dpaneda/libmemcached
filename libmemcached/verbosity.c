@@ -26,7 +26,7 @@ static memcached_return_t _set_verbosity(const memcached_st *ptr __attribute__((
     memcached_server_write_instance_st instance=
       memcached_server_instance_fetch(memc_ptr, 0);
 
-    rc= memcached_do(instance, execute->buffer, execute->length, true);
+    rc= memcached_do(instance, execute->buffer, execute->length, true, 0);
 
     if (rc == MEMCACHED_SUCCESS)
     {

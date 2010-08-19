@@ -238,6 +238,7 @@ static memcached_return_t binary_stats_fetch(memcached_stat_st *memc_stat,
   request.message.header.request.magic= PROTOCOL_BINARY_REQ;
   request.message.header.request.opcode= PROTOCOL_BINARY_CMD_STAT;
   request.message.header.request.datatype= PROTOCOL_BINARY_RAW_BYTES;
+  request.message.header.request.opaque= ++instance->root->opaque_seed;
 
   if (args != NULL)
   {
@@ -256,7 +257,7 @@ static memcached_return_t binary_stats_fetch(memcached_stat_st *memc_stat,
       { .length= len, .buffer= args }
     }; 
 
-    if (memcached_vdo(instance, vector, 2, true) != MEMCACHED_SUCCESS)
+    if (memcached_vdo(instance, vector, 2, true, request.message.header.request.opaque) != MEMCACHED_SUCCESS)
     {
       memcached_io_reset(instance);
       return MEMCACHED_WRITE_FAILURE;
@@ -265,14 +266,13 @@ static memcached_return_t binary_stats_fetch(memcached_stat_st *memc_stat,
   else
   {
     if (memcached_do(instance, request.bytes,
-                     sizeof(request.bytes), true) != MEMCACHED_SUCCESS)
+                     sizeof(request.bytes), true, request.message.header.request.opaque) != MEMCACHED_SUCCESS)
     {
       memcached_io_reset(instance);
       return MEMCACHED_WRITE_FAILURE;
     }
   }
 
-  memcached_server_response_decrement(instance);
   do
   {
     rc= memcached_response(instance, buffer, sizeof(buffer), NULL);
@@ -319,7 +319,7 @@ static memcached_return_t ascii_stats_fetch(memcached_stat_st *memc_stat,
   if (send_length >= MEMCACHED_DEFAULT_COMMAND_SIZE)
     return MEMCACHED_WRITE_FAILURE;
 
-  rc= memcached_do(instance, buffer, send_length, true);
+  rc= memcached_do(instance, buffer, send_length, true, 0);
   if (rc != MEMCACHED_SUCCESS)
     goto error;
 

@@ -12,7 +12,7 @@
 #include "common.h"
 
 memcached_return_t memcached_do(memcached_server_write_instance_st ptr, const void *command, 
-                                size_t command_length, bool with_flush)
+                                size_t command_length, bool with_flush, uint32_t opaque)
 {
   memcached_return_t rc;
   ssize_t sent_length;
@@ -44,7 +44,7 @@ memcached_return_t memcached_do(memcached_server_write_instance_st ptr, const vo
   }
   else if ((ptr->root->flags.no_reply) == 0)
   {
-    memcached_server_response_increment(ptr);
+    memcached_server_response_increment(ptr, opaque);
   }
 
   return rc;
@@ -52,7 +52,7 @@ memcached_return_t memcached_do(memcached_server_write_instance_st ptr, const vo
 
 memcached_return_t memcached_vdo(memcached_server_write_instance_st ptr,
                                  const struct __write_vector_st *vector, size_t count,
-                                 bool with_flush)
+                                 bool with_flush, uint32_t opaque)
 {
   memcached_return_t rc;
   ssize_t sent_length;
@@ -92,7 +92,7 @@ memcached_return_t memcached_vdo(memcached_server_write_instance_st ptr,
   }
   else if ((ptr->root->flags.no_reply) == 0)
   {
-    memcached_server_response_increment(ptr);
+    memcached_server_response_increment(ptr, opaque);
   }
 
   return rc;

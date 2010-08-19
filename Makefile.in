@@ -295,8 +295,8 @@ am__libmemcached_libmemcached_la_SOURCES_DIST =  \
 	libmemcached/server.c libmemcached/server_list.c \
 	libmemcached/stats.c libmemcached/storage.c \
 	libmemcached/strerror.c libmemcached/verbosity.c \
-	libmemcached/version.c libmemcached/sasl.c \
-	libmemcached/libmemcached_probes.d
+	libmemcached/version.c libmemcached/opaque.c \
+	libmemcached/sasl.c libmemcached/libmemcached_probes.d
 @HAVE_SASL_TRUE@am__objects_4 = libmemcached/libmemcached_libmemcached_la-sasl.lo
 am__objects_5 =
 am_libmemcached_libmemcached_la_OBJECTS =  \
@@ -329,6 +329,7 @@ am_libmemcached_libmemcached_la_OBJECTS =  \
 	libmemcached/libmemcached_libmemcached_la-strerror.lo \
 	libmemcached/libmemcached_libmemcached_la-verbosity.lo \
 	libmemcached/libmemcached_libmemcached_la-version.lo \
+	libmemcached/libmemcached_libmemcached_la-opaque.lo \
 	$(am__objects_4) $(am__objects_5)
 libmemcached_libmemcached_la_OBJECTS =  \
 	$(am_libmemcached_libmemcached_la_OBJECTS)
@@ -926,7 +927,8 @@ libmemcached_libmemcached_la_SOURCES = libmemcached/allocators.c \
 	libmemcached/server.c libmemcached/server_list.c \
 	libmemcached/stats.c libmemcached/storage.c \
 	libmemcached/strerror.c libmemcached/verbosity.c \
-	libmemcached/version.c $(am__append_7) $(am__append_10)
+	libmemcached/version.c libmemcached/opaque.c $(am__append_7) \
+	$(am__append_10)
 libmemcached_libmemcached_la_DEPENDENCIES =  \
 	libmemcached/libmemcachedcallbacks.la \
 	libmemcached/libmemcachedinternal.la \
@@ -1386,6 +1388,9 @@ libmemcached/libmemcached_libmemcached_la-verbosity.lo:  \
 libmemcached/libmemcached_libmemcached_la-version.lo:  \
 	libmemcached/$(am__dirstamp) \
 	libmemcached/$(DEPDIR)/$(am__dirstamp)
+libmemcached/libmemcached_libmemcached_la-opaque.lo:  \
+	libmemcached/$(am__dirstamp) \
+	libmemcached/$(DEPDIR)/$(am__dirstamp)
 libmemcached/libmemcached_libmemcached_la-sasl.lo:  \
 	libmemcached/$(am__dirstamp) \
 	libmemcached/$(DEPDIR)/$(am__dirstamp)
@@ -1759,6 +1764,8 @@ mostlyclean-compile:
 	-rm -f libmemcached/libmemcached_libmemcached_la-key.lo
 	-rm -f libmemcached/libmemcached_libmemcached_la-memcached.$(OBJEXT)
 	-rm -f libmemcached/libmemcached_libmemcached_la-memcached.lo
+	-rm -f libmemcached/libmemcached_libmemcached_la-opaque.$(OBJEXT)
+	-rm -f libmemcached/libmemcached_libmemcached_la-opaque.lo
 	-rm -f libmemcached/libmemcached_libmemcached_la-parse.$(OBJEXT)
 	-rm -f libmemcached/libmemcached_libmemcached_la-parse.lo
 	-rm -f libmemcached/libmemcached_libmemcached_la-purge.$(OBJEXT)
@@ -1892,6 +1899,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-io.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-key.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-memcached.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-opaque.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-purge.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-quit.Plo@am__quote@
@@ -2410,6 +2418,14 @@ libmemcached/libmemcached_libmemcached_la-version.lo: libmemcached/version.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='libmemcached/version.c' object='libmemcached/libmemcached_libmemcached_la-version.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_libmemcached_la_CFLAGS) $(CFLAGS) -c -o libmemcached/libmemcached_libmemcached_la-version.lo `test -f 'libmemcached/version.c' || echo '$(srcdir)/'`libmemcached/version.c
+
+libmemcached/libmemcached_libmemcached_la-opaque.lo: libmemcached/opaque.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_libmemcached_la_CFLAGS) $(CFLAGS) -MT libmemcached/libmemcached_libmemcached_la-opaque.lo -MD -MP -MF libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-opaque.Tpo -c -o libmemcached/libmemcached_libmemcached_la-opaque.lo `test -f 'libmemcached/opaque.c' || echo '$(srcdir)/'`libmemcached/opaque.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-opaque.Tpo libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-opaque.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='libmemcached/opaque.c' object='libmemcached/libmemcached_libmemcached_la-opaque.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_libmemcached_la_CFLAGS) $(CFLAGS) -c -o libmemcached/libmemcached_libmemcached_la-opaque.lo `test -f 'libmemcached/opaque.c' || echo '$(srcdir)/'`libmemcached/opaque.c
 
 libmemcached/libmemcached_libmemcached_la-sasl.lo: libmemcached/sasl.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmemcached_libmemcached_la_CFLAGS) $(CFLAGS) -MT libmemcached/libmemcached_libmemcached_la-sasl.lo -MD -MP -MF libmemcached/$(DEPDIR)/libmemcached_libmemcached_la-sasl.Tpo -c -o libmemcached/libmemcached_libmemcached_la-sasl.lo `test -f 'libmemcached/sasl.c' || echo '$(srcdir)/'`libmemcached/sasl.c

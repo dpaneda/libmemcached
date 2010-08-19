@@ -14,7 +14,7 @@
 */
 #include "common.h"
 
-static inline void _server_init(memcached_server_st *self, const memcached_st *root,
+static inline void _server_init(memcached_server_st *self, memcached_st *root,
                                 const char *hostname, in_port_t port,
                                 uint32_t weight, memcached_connection_t type)
 {
@@ -22,6 +22,7 @@ static inline void _server_init(memcached_server_st *self, const memcached_st *r
   self->options.is_shutting_down= false;
   self->number_of_hosts= 0;
   self->cursor_active= 0;
+  self->pending_ops= NULL;
   self->port= port;
   self->cached_errno= 0;
   self->fd= -1;
@@ -81,7 +82,7 @@ static memcached_server_st *_server_create(memcached_server_st *self, const memc
   return self;
 }
 
-memcached_server_st *memcached_server_create_with(const memcached_st *memc,
+memcached_server_st *memcached_server_create_with(memcached_st *memc,
                                                   memcached_server_write_instance_st self,
                                                   const char *hostname, in_port_t port,
                                                   uint32_t weight, memcached_connection_t type)
