@@ -94,7 +94,7 @@ static inline bool _memcached_init(memcached_st *self)
   self->delete_trigger= NULL;
   self->callbacks= NULL;
   self->sasl= NULL;
-  self->opaque_seed = random();
+  self->opaque_seed = (uint32_t)random();
 
   return true;
 }

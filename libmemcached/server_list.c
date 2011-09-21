@@ -12,11 +12,12 @@
 
 #include "common.h"
 
-memcached_server_list_st 
-memcached_server_list_append_with_weight(memcached_server_list_st ptr,
-                                         const char *hostname, in_port_t port,
-                                         uint32_t weight,
-                                         memcached_return_t *error)
+memcached_server_list_st
+memcached_server_list_append_full(memcached_server_list_st ptr,
+                                  const char *hostname, in_port_t port,
+                                  uint32_t weight,
+                                  memcached_return_t *error,
+                                  memcached_connection_t conn_type)
 {
   uint32_t count;
   memcached_server_list_st new_host_list;
@@ -34,7 +35,9 @@ memcached_server_list_append_with_weight(memcached_server_list_st ptr,
     count+= memcached_server_list_count(ptr);
   }
 
-  new_host_list= (memcached_server_write_instance_st)realloc(ptr, sizeof(memcached_server_st) * count);
+  new_host_list= (memcached_server_write_instance_st) 
+                    realloc(ptr, sizeof(memcached_server_st) * count);
+
   if (!new_host_list)
   {
     *error= MEMCACHED_MEMORY_ALLOCATION_FAILURE;
@@ -42,13 +45,36 @@ memcached_server_list_append_with_weight(memcached_server_list_st ptr,
   }
 
   /* TODO: Check return type */
-  memcached_server_create_with(NULL, &new_host_list[count-1], hostname, port, weight, MEMCACHED_CONNECTION_TCP);
+  memcached_server_create_with(NULL, &new_host_list[count-1], 
+                                hostname, port, weight, conn_type);
 
   /* Backwards compatibility hack */
   memcached_servers_set_count(new_host_list, count);
 
   *error= MEMCACHED_SUCCESS;
   return new_host_list;
+}
+
+memcached_server_list_st 
+memcached_server_list_append_with_weight(memcached_server_list_st ptr,
+                                         const char *hostname, in_port_t port,
+                                         uint32_t weight,
+                                         memcached_return_t *error)
+{
+  return memcached_server_list_append_full(ptr, hostname, port, 
+                                           weight, error, 
+                                            MEMCACHED_CONNECTION_TCP);
+}
+
+memcached_server_list_st 
+memcached_server_list_append_udp_with_weight(memcached_server_list_st ptr,
+                                             const char *hostname, in_port_t port,
+                                             uint32_t weight,
+                                             memcached_return_t *error)
+{
+  return memcached_server_list_append_full(ptr, hostname, port, 
+                                           weight, error, 
+                                           MEMCACHED_CONNECTION_UDP);
 }
 
 memcached_server_list_st

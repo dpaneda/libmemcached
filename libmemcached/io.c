@@ -275,7 +275,15 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
 
       while (1)
       {
-        data_read= read(ptr->fd, ptr->read_buffer, MEMCACHED_MAX_BUFFER);
+        if (ptr->root->flags.use_udp)
+        {
+          data_read = memcached_io_udp_read(ptr, ptr->read_buffer);
+        }
+        else 
+        {
+          data_read= read(ptr->fd, ptr->read_buffer, MEMCACHED_MAX_BUFFER);
+        }
+
         if (data_read > 0)
         {
           break;
@@ -294,10 +302,11 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
             if ((rc= io_wait(ptr, MEM_READ)) == MEMCACHED_SUCCESS)
               continue;
             /* fall through */
-
           default:
             {
-              memcached_quit_server(ptr, true);
+              if (! ((rc == MEMCACHED_TIMEOUT) && ptr->root->flags.use_udp)) {
+                memcached_quit_server(ptr, true);
+              }
               *nread= -1;
               return rc;
             }
@@ -355,6 +364,48 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
   *nread = (ssize_t)(buffer_ptr - (char*)buffer);
   return MEMCACHED_SUCCESS;
 }
+
+
+ssize_t memcached_io_udp_read(memcached_server_write_instance_st ptr, void *buf)
+{
+  char datagram[MAX_UDP_DATAGRAM_LENGTH + sizeof(struct udp_datagram_header_st)];
+  ssize_t nread;
+
+  nread= recv(ptr->fd, datagram, sizeof(datagram), 0);
+
+  if (nread <= 0)
+    return nread;
+
+  struct udp_datagram_header_st *udp_header= (struct udp_datagram_header_st*) datagram;
+  
+  if (ntohs(udp_header->sequence_number) == 0)
+  {   
+    ptr->seq_number= 0;
+    ptr->num_datagrams= ntohs(udp_header->num_datagrams);
+    ptr->request_id= ntohs(udp_header->request_id);
+
+    ptr->read_buffer_length= 0;
+  }
+  else
+  {
+    ptr->seq_number++;
+
+    // Detect packets out of sequence, drop packet
+    if (ptr->num_datagrams != ntohs(udp_header->num_datagrams)
+        || ptr->request_id != ntohs(udp_header->request_id)
+        || ptr->seq_number != ntohs(udp_header->sequence_number)
+        || ptr->seq_number >= ptr->num_datagrams)
+      return -1;
+    
+  }
+ 
+  // Copy read contents to buffer skipping UDP headers 
+  nread-= (ssize_t) sizeof(*udp_header);
+  memcpy(buf, datagram + sizeof(*udp_header), (size_t) nread);
+
+  return nread;
+}
+
 
 static ssize_t _io_write(memcached_server_write_instance_st ptr,
                          const void *buffer, size_t length, bool with_flush)

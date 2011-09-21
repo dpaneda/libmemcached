@@ -7,7 +7,7 @@ char *memcached_fetch(memcached_st *ptr, char *key, size_t *key_length,
 {
   memcached_result_st *result_buffer= &ptr->result;
 
-  unlikely (ptr->flags.use_udp)
+  unlikely (ptr->flags.use_udp && !ptr->flags.check_opaque)
   {
     *error= MEMCACHED_NOT_SUPPORTED;
     return NULL;
@@ -48,7 +48,7 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
 {
   memcached_server_st *server;
 
-  unlikely (ptr->flags.use_udp)
+  unlikely (ptr->flags.use_udp && !ptr->flags.check_opaque)
   {
     *error= MEMCACHED_NOT_SUPPORTED;
     return NULL;
@@ -68,6 +68,15 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
   {
     char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
     *error= memcached_response(server, buffer, sizeof(buffer), result);
+
+    if (ptr->flags.use_udp) {
+      if ((*error == MEMCACHED_UNKNOWN_READ_FAILURE) 
+          || *error == MEMCACHED_TIMEOUT)
+      {
+        // UDP error are cache misses
+        *error= MEMCACHED_NOTFOUND;
+      }
+    }
 
     if (*error == MEMCACHED_SUCCESS)
       return result;

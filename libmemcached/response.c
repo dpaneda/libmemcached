@@ -343,17 +343,12 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
   memcached_return_t rc;
   protocol_binary_response_header header;
 
-  for (;;)
+  for (;;) 
   {
     if ((rc= memcached_safe_read(ptr, &header.bytes, sizeof(header.bytes))) != MEMCACHED_SUCCESS)
     {
       WATCHPOINT_ERROR(rc);
       return rc;
-    }
-
-    if (header.response.magic != PROTOCOL_BINARY_RES)
-    {
-      return MEMCACHED_PROTOCOL_ERROR;
     }
 
     if (memcached_server_response_decrement(ptr, header.response.opaque))
@@ -364,9 +359,14 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
     }
   }
 
+  if (header.response.magic != PROTOCOL_BINARY_RES)
+  {
+    return MEMCACHED_PROTOCOL_ERROR;
+  }
+
   /*
-   ** Convert the header to host local endian!
- */
+   * Convert the header to host local endian!
+   */
   header.response.keylen= ntohs(header.response.keylen);
   header.response.status= ntohs(header.response.status);
   header.response.bodylen= ntohl(header.response.bodylen);
@@ -394,7 +394,8 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
         memcached_result_reset(result);
         result->item_cas= header.response.cas;
 
-        if ((rc= memcached_safe_read(ptr, &result->item_flags, sizeof (result->item_flags))) != MEMCACHED_SUCCESS)
+        if ((rc= memcached_safe_read(ptr, &result->item_flags, 
+                  sizeof (result->item_flags))) != MEMCACHED_SUCCESS)
         {
           WATCHPOINT_ERROR(rc);
           return MEMCACHED_UNKNOWN_READ_FAILURE;

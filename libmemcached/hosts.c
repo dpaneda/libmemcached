@@ -313,7 +313,7 @@ memcached_return_t memcached_server_push(memcached_st *ptr, const memcached_serv
 
   count= memcached_server_list_count(list);
   new_host_list= libmemcached_realloc(ptr, memcached_server_list(ptr),
-                                      sizeof(memcached_server_st) * (count + memcached_server_count(ptr)));
+                               sizeof(memcached_server_st) * (count + memcached_server_count(ptr)));
 
   if (! new_host_list)
     return MEMCACHED_MEMORY_ALLOCATION_FAILURE;

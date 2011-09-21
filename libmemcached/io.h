@@ -62,6 +62,9 @@ LIBMEMCACHED_LOCAL
 memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
                                      void *buffer, size_t length, ssize_t *nread);
 
+LIBMEMCACHED_LOCAL
+ssize_t memcached_io_udp_read(memcached_server_write_instance_st ptr, void *buffer);
+
 /* Read a line (terminated by '\n') into the buffer */
 LIBMEMCACHED_LOCAL
 memcached_return_t memcached_io_readline(memcached_server_write_instance_st ptr,

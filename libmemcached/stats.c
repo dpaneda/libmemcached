@@ -365,12 +365,6 @@ memcached_stat_st *memcached_stat(memcached_st *ptr, char *args, memcached_retur
   memcached_return_t rc;
   memcached_stat_st *stats;
 
-  unlikely (ptr->flags.use_udp)
-  {
-    *error= MEMCACHED_NOT_SUPPORTED;
-    return NULL;
-  }
-
   stats= libmemcached_calloc(ptr, memcached_server_count(ptr), sizeof(memcached_stat_st));
 
   if (! stats)

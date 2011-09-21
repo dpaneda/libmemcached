@@ -10,6 +10,7 @@
  */
 
 #include "common.h"
+#include <unistd.h>
 
 /*
   What happens if no servers exist?
@@ -45,7 +46,7 @@ char *memcached_get_by_key(memcached_st *ptr,
   uint32_t dummy_flags;
   memcached_return_t dummy_error;
 
-  unlikely (ptr->flags.use_udp)
+  unlikely (ptr->flags.use_udp && !ptr->flags.check_opaque)
   {
     *error= MEMCACHED_NOT_SUPPORTED;
     return NULL;
@@ -155,7 +156,7 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
   unsigned int master_server_key= (unsigned int)-1; /* 0 is a valid server id! */
   bool is_master_key_set= false;
 
-  unlikely (ptr->flags.use_udp)
+  unlikely (ptr->flags.use_udp && !ptr->flags.check_opaque)
     return MEMCACHED_NOT_SUPPORTED;
 
   LIBMEMCACHED_MEMCACHED_MGET_START();
@@ -166,7 +167,8 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
   if (memcached_server_count(ptr) == 0)
     return MEMCACHED_NO_SERVERS;
 
-  if (ptr->flags.verify_key && (memcached_key_test(keys, key_length, number_of_keys) == MEMCACHED_BAD_KEY_PROVIDED))
+  if (ptr->flags.verify_key 
+		&& (memcached_key_test(keys, key_length, number_of_keys) == MEMCACHED_BAD_KEY_PROVIDED))
     return MEMCACHED_BAD_KEY_PROVIDED;
 
   if (master_key && master_key_length)
@@ -185,8 +187,7 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
   */
   for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
   {
-    memcached_server_write_instance_st instance=
-      memcached_server_instance_fetch(ptr, x);
+    memcached_server_write_instance_st instance= memcached_server_instance_fetch(ptr, x);
 
     if (memcached_server_response_count(instance))
     {
@@ -202,8 +203,8 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
 
   if (ptr->flags.binary_protocol)
   {
-    return binary_mget_by_key(ptr, master_server_key, is_master_key_set, keys,
-                              key_length, number_of_keys, mget_mode);
+    return binary_mget_by_key(ptr, master_server_key, is_master_key_set, keys, 
+            key_length, number_of_keys, mget_mode);
   }
 
   if (ptr->flags.support_cas)
@@ -354,7 +355,8 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
 {
   memcached_return_t rc= MEMCACHED_NOTFOUND;
 
-  int flush= number_of_keys == 1;
+  bool flush = (number_of_keys == 1);
+  size_t written = 0;
 
   /*
     If a server fails we warn about errors and start all over with sending keys
@@ -363,8 +365,9 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
   for (uint32_t x= 0; x < number_of_keys; ++x)
   {
     uint32_t server_key;
+    
     memcached_server_write_instance_st instance;
-
+    
     if (is_master_key_set)
     {
       server_key= master_server_key;
@@ -414,6 +417,26 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
       { .length= ptr->prefix_key_length, .buffer= ptr->prefix_key },
       { .length= key_length[x], .buffer= keys[x] }
     }; 
+
+    if (ptr->flags.use_udp)
+    {
+      // On UDP we need to make sure we are not sending requests on multiple
+      // datagrams, so we flush the connection to send datagram when the
+      // current one does not fit on a single datagram
+        
+      written+= vector[0].length + vector[1].length + vector[2].length;
+    
+      if (written + UDP_DATAGRAM_HEADER_LENGTH >= MAX_UDP_DATAGRAM_LENGTH) {
+        written= vector[0].length + vector[1].length + vector[2].length;
+
+        if (memcached_io_write(instance, NULL, 0, true) == -1)
+        {
+          memcached_server_response_reset(instance);
+          rc= MEMCACHED_SOME_ERRORS;
+          break;
+        }
+      }
+    }
 
     if (memcached_io_writev(instance, vector, 3, flush) == -1)
     {

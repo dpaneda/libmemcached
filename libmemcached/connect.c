@@ -155,6 +155,31 @@ static memcached_return_t set_socket_options(memcached_server_st *ptr)
 {
   WATCHPOINT_ASSERT(ptr->fd != -1);
 
+  /* libmemcached will always use nonblocking IO to avoid write deadlocks */
+  int flags;
+
+  do
+    flags= fcntl(ptr->fd, F_GETFL, 0);
+  while (flags == -1 && (errno == EINTR || errno == EAGAIN));
+
+  unlikely (flags == -1)
+  {
+    return MEMCACHED_CONNECTION_FAILURE;
+  }
+  else if ((flags & O_NONBLOCK) == 0)
+  {
+    int rval;
+
+    do
+      rval= fcntl(ptr->fd, F_SETFL, flags | O_NONBLOCK);
+    while (rval == -1 && (errno == EINTR || errno == EAGAIN));
+
+    unlikely (rval == -1)
+    {
+      return MEMCACHED_CONNECTION_FAILURE;
+    }
+  }
+
   if (ptr->type == MEMCACHED_CONNECTION_UDP)
     return MEMCACHED_SUCCESS;
 
@@ -278,31 +303,6 @@ static memcached_return_t set_socket_options(memcached_server_st *ptr)
     WATCHPOINT_ASSERT(error == 0);
     if (error)
       return MEMCACHED_FAILURE;
-  }
-
-  /* libmemcached will always use nonblocking IO to avoid write deadlocks */
-  int flags;
-
-  do
-    flags= fcntl(ptr->fd, F_GETFL, 0);
-  while (flags == -1 && (errno == EINTR || errno == EAGAIN));
-
-  unlikely (flags == -1)
-  {
-    return MEMCACHED_CONNECTION_FAILURE;
-  }
-  else if ((flags & O_NONBLOCK) == 0)
-  {
-    int rval;
-
-    do
-      rval= fcntl(ptr->fd, F_SETFL, flags | O_NONBLOCK);
-    while (rval == -1 && (errno == EINTR || errno == EAGAIN));
-
-    unlikely (rval == -1)
-    {
-      return MEMCACHED_CONNECTION_FAILURE;
-    }
   }
 
   return MEMCACHED_SUCCESS;

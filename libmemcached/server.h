@@ -53,6 +53,10 @@ struct memcached_server_st {
   char read_buffer[MEMCACHED_MAX_BUFFER];
   char write_buffer[MEMCACHED_MAX_BUFFER];
   char hostname[NI_MAXHOST];
+  // State data for read UDP datagrams
+  uint16_t request_id;
+  uint16_t seq_number;
+  uint16_t num_datagrams;
 };
 
 

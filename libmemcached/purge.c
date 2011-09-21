@@ -66,6 +66,12 @@ memcached_return_t memcached_purge(memcached_server_write_instance_st ptr)
         memcached_io_reset(ptr);
       }
 
+      if (ptr->root->flags.use_udp && (rc == MEMCACHED_TIMEOUT)) 
+      {
+        ret = rc;
+        break; 
+      }
+
       if (ptr->root->callbacks != NULL)
       {
         memcached_callback_st cb = *ptr->root->callbacks;

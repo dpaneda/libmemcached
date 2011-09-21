@@ -74,9 +74,10 @@ memcached_return_t memcached_behavior_set(memcached_st *ptr,
     memcached_quit(ptr);
     break;
   case MEMCACHED_BEHAVIOR_USE_UDP:
+    memcached_quit(ptr);
     if (memcached_server_count(ptr))
     {
-      return MEMCACHED_FAILURE;
+      //return MEMCACHED_FAILURE;
     }
     ptr->flags.use_udp= set_flag(data);
     if (data)

@@ -362,7 +362,13 @@ static test_return_t connection_test(memcached_st *memc)
 {
   memcached_return_t rc;
 
-  rc= memcached_server_add_with_weight(memc, "localhost", 0, 0);
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_USE_UDP) == 1) {
+    rc= memcached_server_add_udp_with_weight(memc, "localhost", 0, 0);
+  }
+  else {
+    rc= memcached_server_add_with_weight(memc, "localhost", 0, 0);
+  }
+
   test_true(rc == MEMCACHED_SUCCESS);
 
   return TEST_SUCCESS;
@@ -401,6 +407,45 @@ static test_return_t error_test(memcached_st *memc)
 
   return TEST_SUCCESS;
 }
+
+/* Helper function for simulate large set with multiple appends when using UDP
+ *
+ * For TCP connections just use normal set
+ */
+static memcached_return_t memcached_helper_set(memcached_st *ptr, const char *key, size_t key_length,
+                                     const char *value, size_t value_length,
+                                     time_t expiration,
+                                     uint32_t flags)
+
+{
+  memcached_return_t rc;
+
+  if ((memcached_behavior_get(ptr, MEMCACHED_BEHAVIOR_USE_UDP) == 1) 
+    && (value_length > 1000)) {
+    // If we are using UDP we have to write the value with many appends
+    for (unsigned int i= 0; i < value_length; i+= 1000) {
+      size_t to_write= value_length - i;
+
+      if (to_write > 1000) {
+            to_write= 1000;
+      }
+
+      if (i == 0) {
+        rc= memcached_set(ptr, key, key_length, &value[i], to_write, expiration, flags);
+      } else {
+        rc= memcached_append(ptr, key, key_length, &value[i], to_write, expiration, flags);
+      }
+
+      test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
+    }
+  }
+  else {
+    rc= memcached_set(ptr, key, strlen(key), value, value_length, (time_t)0, (uint32_t)0);
+  }
+
+  return rc;
+}
+
 
 static test_return_t set_test(memcached_st *memc)
 {
@@ -662,7 +707,7 @@ static test_return_t add_test(memcached_st *memc)
   /* Too many broken OS'es have broken loopback in async, so we can't be sure of the result */
   if (setting_value)
   {
-    test_true(rc == MEMCACHED_NOTSTORED || rc == MEMCACHED_STORED);
+    test_true(rc == MEMCACHED_NOTSTORED || rc == MEMCACHED_STORED || rc == MEMCACHED_DATA_EXISTS);
   }
   else
   {
@@ -1016,9 +1061,10 @@ static test_return_t set_test3(memcached_st *memc)
 
     sprintf(key, "foo%u", x);
 
-    rc= memcached_set(memc, key, strlen(key),
+    rc= memcached_helper_set(memc, key, strlen(key),
                       value, value_length,
                       (time_t)0, (uint32_t)0);
+
     test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
   }
 
@@ -1042,11 +1088,9 @@ static test_return_t get_test3(memcached_st *memc)
   test_true(value);
 
   for (x= 0; x < value_length; x++)
-    value[x] = (char) (x % 127);
+    value[x] = (char) (x / 127);
 
-  rc= memcached_set(memc, key, strlen(key),
-                    value, value_length,
-                    (time_t)0, (uint32_t)0);
+  rc= memcached_helper_set(memc, key, strlen(key), value, value_length, (time_t)0, (uint32_t)0);
   test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
 
   string= memcached_get(memc, key, strlen(key),
@@ -1080,7 +1124,7 @@ static test_return_t get_test4(memcached_st *memc)
   for (x= 0; x < value_length; x++)
     value[x] = (char) (x % 127);
 
-  rc= memcached_set(memc, key, strlen(key),
+  rc= memcached_helper_set(memc, key, strlen(key),
                     value, value_length,
                     (time_t)0, (uint32_t)0);
   test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
@@ -1671,6 +1715,10 @@ static test_return_t mget_execute(memcached_st *memc)
 
   size_t max_keys= 20480;
 
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_USE_UDP) == 1) {
+    // We reduce the values for UDP to make sure we dont fill the recv buffer
+    max_keys = 200;
+  }
 
   char **keys= calloc(max_keys, sizeof(char*));
   size_t *key_length=calloc(max_keys, sizeof(size_t));
@@ -1686,12 +1734,14 @@ static test_return_t mget_execute(memcached_st *memc)
     key_length[x]= (size_t)snprintf(k, sizeof(k), "0200%zu", x);
     keys[x]= strdup(k);
     test_true(keys[x] != NULL);
+    strncpy(blob, keys[x], key_length[x]);
     rc= memcached_add(memc, keys[x], key_length[x], blob, sizeof(blob), 0, 0);
     test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
   }
 
   /* Try to get all of them with a large multiget */
   size_t counter= 0;
+
   memcached_execute_fn callbacks[1]= { [0]= &callback_counter };
   rc= memcached_mget_execute(memc, (const char**)keys, key_length,
                              max_keys, callbacks, &counter, 1);
@@ -1832,8 +1882,13 @@ static test_return_t add_host_test(memcached_st *memc)
   memcached_server_st *servers;
   memcached_return_t rc;
   char servername[]= "0.example.com";
+  memcached_connection_t conn_type = MEMCACHED_CONNECTION_TCP;
 
-  servers= memcached_server_list_append_with_weight(NULL, servername, 400, 0, &rc);
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_USE_UDP) == 1) {
+    conn_type = MEMCACHED_CONNECTION_UDP;
+  }
+
+  servers= memcached_server_list_append_full(NULL, servername, 400, 0, &rc, conn_type);
   test_true(servers);
   test_true(1 == memcached_server_list_count(servers));
 
@@ -1842,8 +1897,7 @@ static test_return_t add_host_test(memcached_st *memc)
     char buffer[SMALL_STRING_LEN];
 
     snprintf(buffer, SMALL_STRING_LEN, "%u.example.com", 400+x);
-    servers= memcached_server_list_append_with_weight(servers, buffer, 401, 0,
-                                     &rc);
+    servers= memcached_server_list_append_full(servers, buffer, 401, 0, &rc, conn_type);
     test_true(rc == MEMCACHED_SUCCESS);
     test_true(x == memcached_server_list_count(servers));
   }
@@ -2091,12 +2145,12 @@ static test_return_t user_supplied_bug1(memcached_st *memc)
 
     total += size;
     snprintf(key, sizeof(key), "%u", x);
-    rc = memcached_set(memc, key, strlen(key),
+    rc = memcached_helper_set(memc, key, strlen(key),
                        randomstuff, strlen(randomstuff), 10, 0);
     test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
     /* If we fail, lets try again */
     if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED)
-      rc = memcached_set(memc, key, strlen(key),
+      rc = memcached_helper_set(memc, key, strlen(key),
                          randomstuff, strlen(randomstuff), 10, 0);
     test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
   }
@@ -2596,6 +2650,10 @@ static test_return_t user_supplied_bug12(memcached_st *memc)
   char *value;
   uint64_t number_value;
 
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_USE_UDP) == 1) {
+    return TEST_SKIPPED;
+  }
+
   value= memcached_get(memc, "autoincrement", strlen("autoincrement"),
                         &value_length, &flags, &rc);
   test_true(value == NULL);
@@ -2657,7 +2715,7 @@ static test_return_t user_supplied_bug13(memcached_st *memc)
     test_true(overflow != NULL);
 
     memset(overflow, 'x', testSize);
-    rc= memcached_set(memc, key, strlen(key),
+    rc= memcached_helper_set(memc, key, strlen(key),
                       overflow, testSize, 0, 0);
     test_true(rc == MEMCACHED_SUCCESS);
     free(overflow);
@@ -2695,7 +2753,7 @@ static test_return_t user_supplied_bug14(memcached_st *memc)
 
   for (current_length= 0; current_length < value_length; current_length++)
   {
-    rc= memcached_set(memc, key, strlen(key),
+    rc= memcached_helper_set(memc, key, strlen(key),
                       value, current_length,
                       (time_t)0, (uint32_t)0);
     test_true(rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED);
@@ -3520,8 +3578,13 @@ static test_return_t add_host_test1(memcached_st *memc)
   memcached_return_t rc;
   char servername[]= "0.example.com";
   memcached_server_st *servers;
+  memcached_connection_t conn_type = MEMCACHED_CONNECTION_TCP;
 
-  servers= memcached_server_list_append_with_weight(NULL, servername, 400, 0, &rc);
+  if (memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_USE_UDP) == 1) {
+    conn_type = MEMCACHED_CONNECTION_UDP;
+  }
+
+  servers= memcached_server_list_append_full(NULL, servername, 400, 0, &rc, conn_type);
   test_true(servers);
   test_true(1 == memcached_server_list_count(servers));
 
@@ -3530,8 +3593,7 @@ static test_return_t add_host_test1(memcached_st *memc)
     char buffer[SMALL_STRING_LEN];
 
     snprintf(buffer, SMALL_STRING_LEN, "%zu.example.com", 400+x);
-    servers= memcached_server_list_append_with_weight(servers, buffer, 401, 0,
-                                     &rc);
+    servers= memcached_server_list_append_full(servers, buffer, 401, 0, &rc, conn_type);
     test_true(rc == MEMCACHED_SUCCESS);
     test_true(x == memcached_server_list_count(servers));
   }
@@ -3744,6 +3806,32 @@ static test_return_t pre_binary_opaque(memcached_st *memc)
     test_true(rc == MEMCACHED_SUCCESS);
     test_true(memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL) == 1);
   }
+
+  return rc == MEMCACHED_SUCCESS ? TEST_SUCCESS : TEST_SKIPPED;
+}
+
+static test_return_t pre_binary_udp(memcached_st *memc)
+{
+  memcached_return_t rc= MEMCACHED_FAILURE;
+
+  if (libmemcached_util_version_check(memc, 1, 3, 0))
+  {
+    rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_USE_UDP, 1);
+    test_true(rc == MEMCACHED_SUCCESS);
+    rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL, 1);
+    test_true(rc == MEMCACHED_SUCCESS);
+    rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_CHECK_OPAQUE, 1);
+    test_true(rc == MEMCACHED_SUCCESS);
+    rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_NOREPLY, 0);
+    test_true(rc == MEMCACHED_SUCCESS);
+    rc= memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
+    test_true(rc == MEMCACHED_SUCCESS);
+    test_true(memcached_behavior_get(memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL) == 1);
+  }
+
+  memcached_servers_reset(memc);
+  memcached_server_add_udp_with_weight(memc, "localhost", 11221, 100);
+  memcached_server_add_udp_with_weight(memc, "localhost", 11222, 100);
 
   return rc == MEMCACHED_SUCCESS ? TEST_SUCCESS : TEST_SKIPPED;
 }
@@ -4436,24 +4524,50 @@ static test_return_t util_version_test(memcached_st *memc)
   memcached_version(memc);
 
   // We only use one binary when we test, so this should be just fine.
-  if_successful= libmemcached_util_version_check(memc, instance->major_version, instance->minor_version, instance->micro_version);
-  test_true(if_successful == true);
-
-  if (instance->micro_version > 0)
-    if_successful= libmemcached_util_version_check(memc, instance->major_version, instance->minor_version, instance->micro_version -1);
-  else if (instance->minor_version > 0)
-    if_successful= libmemcached_util_version_check(memc, instance->major_version, instance->minor_version - 1, instance->micro_version);
-  else if (instance->major_version > 0)
-    if_successful= libmemcached_util_version_check(memc, instance->major_version -1, instance->minor_version, instance->micro_version);
+  if_successful= libmemcached_util_version_check(memc,
+                    instance->major_version,
+                    instance->minor_version,
+                    instance->micro_version);
 
   test_true(if_successful == true);
 
   if (instance->micro_version > 0)
-    if_successful= libmemcached_util_version_check(memc, instance->major_version, instance->minor_version, instance->micro_version +1);
+    if_successful= libmemcached_util_version_check(memc,
+						instance->major_version,
+						instance->minor_version,
+						(uint8_t) (instance->micro_version - 1));
+
   else if (instance->minor_version > 0)
-    if_successful= libmemcached_util_version_check(memc, instance->major_version, instance->minor_version +1, instance->micro_version);
+    if_successful= libmemcached_util_version_check(memc,
+					instance->major_version,
+					(uint8_t) (instance->minor_version - 1),
+					instance->micro_version);
+
   else if (instance->major_version > 0)
-    if_successful= libmemcached_util_version_check(memc, instance->major_version +1, instance->minor_version, instance->micro_version);
+    if_successful= libmemcached_util_version_check(memc,
+					(uint8_t) (instance->major_version - 1),
+					instance->minor_version,
+					instance->micro_version);
+
+  test_true(if_successful == true);
+
+  if (instance->micro_version > 0)
+    if_successful= libmemcached_util_version_check(memc,
+					instance->major_version,
+					instance->minor_version,
+					(uint8_t) (instance->micro_version + 1));
+
+  else if (instance->minor_version > 0)
+    if_successful= libmemcached_util_version_check(memc,
+					instance->major_version,
+					(uint8_t) (instance->minor_version + 1),
+					instance->micro_version);
+
+  else if (instance->major_version > 0)
+    if_successful= libmemcached_util_version_check(memc,
+					(uint8_t) (instance->major_version + 1),
+					instance->minor_version,
+					instance->micro_version);
 
   test_true(if_successful == false);
 
@@ -5446,7 +5560,7 @@ static test_return_t regression_bug_447342(memcached_st *memc)
   memcached_server_instance_st instance_one;
   memcached_server_instance_st instance_two;
 
-  if (memcached_server_count(memc) < 3 || pre_replication(memc) != MEMCACHED_SUCCESS)
+  if (memcached_server_count(memc) < 3 || pre_replication(memc) != TEST_SUCCESS)
     return TEST_SKIPPED;
 
   memcached_return_t rc;
@@ -5667,7 +5781,6 @@ static test_return_t test_get_last_disconnect(memcached_st *memc)
   if (disconnected_server == NULL)
   {
     fprintf(stderr, "RC %s\n", memcached_strerror(mine, rc));
-    abort();
   }
   test_true(disconnected_server != NULL);
   test_true(memcached_server_port(disconnected_server)== 9);
@@ -6339,6 +6452,7 @@ collection_st collection[] ={
   {"block", 0, 0, tests},
   {"binary", (test_callback_fn)pre_binary, 0, tests},
   {"binary_opaque", (test_callback_fn)pre_binary_opaque, 0, tests},
+  {"binary_udp", (test_callback_fn)pre_binary_udp, 0, tests},
   {"nonblock", (test_callback_fn)pre_nonblock, 0, tests},
   {"nodelay", (test_callback_fn)pre_nodelay, 0, tests},
   {"settimer", (test_callback_fn)pre_settimer, 0, tests},

@@ -35,6 +35,19 @@ LIBMEMCACHED_API
                                                                     uint32_t weight,
                                                                     memcached_return_t *error);
 LIBMEMCACHED_API
+  memcached_server_list_st memcached_server_list_append_udp_with_weight(memcached_server_list_st ptr,
+                                                                        const char *hostname,
+                                                                        in_port_t port,
+                                                                        uint32_t weight,
+                                                                        memcached_return_t *error);
+LIBMEMCACHED_API
+  memcached_server_list_st memcached_server_list_append_full(memcached_server_list_st ptr,
+                                                             const char *hostname,
+                                                             in_port_t port,
+                                                             uint32_t weight,
+                                                             memcached_return_t *error,
+                                                             memcached_connection_t conn_type);
+LIBMEMCACHED_API
   uint32_t memcached_server_list_count(const memcached_server_list_st ptr);
 
 LIBMEMCACHED_LOCAL

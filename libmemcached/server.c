@@ -43,6 +43,9 @@ static inline void _server_init(memcached_server_st *self, memcached_st *root,
   self->read_data_length= 0;
   self->write_buffer_offset= 0;
   self->address_info= NULL;
+  self->request_id = 0;
+  self->seq_number = 0;
+  self->num_datagrams = 0;
 
   if (root)
   {
@@ -114,6 +117,9 @@ void memcached_server_free(memcached_server_st *self)
   if (self->address_info)
     freeaddrinfo(self->address_info);
 
+  if (self->pending_ops)
+    free(self->pending_ops);
+
   if (memcached_is_allocated(self))
   {
     libmemcached_free(self->root, self);
@@ -122,9 +128,6 @@ void memcached_server_free(memcached_server_st *self)
   {
     self->options.is_initialized= false;
   }
-
-  if (self->pending_ops)
-    free(self->pending_ops);
 }
 
 /*
