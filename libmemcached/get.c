@@ -355,8 +355,12 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
 {
   memcached_return_t rc= MEMCACHED_NOTFOUND;
 
-  bool flush = (number_of_keys == 1);
+  bool flush = false;
   size_t written = 0;
+
+  if ((number_of_keys == 1) || ptr->flags.udp_always_flush) {
+    flush = true;
+  }
 
   /*
     If a server fails we warn about errors and start all over with sending keys
@@ -418,7 +422,7 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
       { .length= key_length[x], .buffer= keys[x] }
     }; 
 
-    if (ptr->flags.use_udp)
+    if (ptr->flags.use_udp && !ptr->flags.udp_always_flush)
     {
       // On UDP we need to make sure we are not sending requests on multiple
       // datagrams, so we flush the connection to send datagram when the

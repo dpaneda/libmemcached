@@ -84,6 +84,11 @@ struct memcached_st {
     bool verify_key:1;
     bool tcp_keepalive:1;
     bool check_opaque:1;
+    // Send every request on one packet. This is a workaround for this
+    // memcached bug https://github.com/memcached/memcached/pull/8
+    // The code could be remove as soon as the memcached production servers
+    // have a memcached version with this bug solved (probably 1.4.8)
+    bool udp_always_flush:1;
   } flags;
   memcached_server_distribution_t distribution;
   hashkit_st hashkit;
