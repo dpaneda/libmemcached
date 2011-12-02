@@ -47,7 +47,7 @@ static memcached_return_t connect_poll(memcached_server_st *ptr)
         }
         else
         {
-          ptr->cached_errno= errno;
+          ptr->cached_errno= err;
 
           return MEMCACHED_ERRNO;
         }

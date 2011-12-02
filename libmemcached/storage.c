@@ -192,6 +192,11 @@ static inline memcached_return_t memcached_send(memcached_st *ptr,
             rc= MEMCACHED_SUCCESS;
         }
       }
+      else
+      {
+        if (instance->cached_errno)
+          ptr->cached_errno = instance->cached_errno;
+      }
     }
 
     if (rc == MEMCACHED_WRITE_FAILURE)
