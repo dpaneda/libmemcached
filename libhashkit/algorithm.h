@@ -48,6 +48,9 @@ HASHKIT_API
 uint32_t libhashkit_jenkins(const char *key, size_t key_length);
 
 HASHKIT_API
+uint32_t libhashkit_fnv1a_compat(const char *key, size_t key_length);
+
+HASHKIT_API
 uint32_t libhashkit_md5(const char *key, size_t key_length);
 
 HASHKIT_LOCAL
@@ -64,6 +67,9 @@ uint32_t hashkit_fnv1_32(const char *key, size_t key_length, void *context);
 
 HASHKIT_LOCAL
 uint32_t hashkit_fnv1a_32(const char *key, size_t key_length, void *context);
+
+HASHKIT_LOCAL
+uint32_t hashkit_fnv1a_compat(const char *key, size_t key_length, void *context);
 
 HASHKIT_LOCAL
 uint32_t hashkit_crc32(const char *key, size_t key_length, void *context);

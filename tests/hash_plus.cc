@@ -81,6 +81,7 @@ static test_return_t set_function_test(void *obj)
     HASHKIT_HASH_FNV1A_32,
     HASHKIT_HASH_MURMUR,
     HASHKIT_HASH_JENKINS,
+    HASHKIT_HASH_FNV1A_COMPAT,
     HASHKIT_HASH_MAX
   };
   hashkit_hash_algorithm_t *algo;
@@ -129,6 +130,9 @@ static test_return_t set_function_test(void *obj)
       break;
     case HASHKIT_HASH_JENKINS:
       list= jenkins_values;
+      break;
+    case HASHKIT_HASH_FNV1A_COMPAT:
+      list= fnv1a_compat_values;
       break;
     case HASHKIT_HASH_CUSTOM:
     case HASHKIT_HASH_MAX:

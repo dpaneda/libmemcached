@@ -34,6 +34,7 @@ libhashkit_libhashkit_la_SOURCES= \
 				  libhashkit/behavior.c \
 				  libhashkit/crc32.c \
 				  libhashkit/fnv.c \
+				  libhashkit/fnv_compat.c \
 				  libhashkit/digest.c \
 				  libhashkit/function.c \
 				  libhashkit/hashkit.c \

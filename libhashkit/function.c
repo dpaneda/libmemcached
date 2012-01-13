@@ -46,6 +46,9 @@ static hashkit_return_t _set_function(struct hashkit_function_st *self, hashkit_
   case HASHKIT_HASH_JENKINS:
     self->function= hashkit_jenkins;
     break;    
+  case HASHKIT_HASH_FNV1A_COMPAT:
+    self->function= hashkit_fnv1a_compat;
+    break;
   case HASHKIT_HASH_CUSTOM:
   case HASHKIT_HASH_MAX:
   default:
@@ -133,6 +136,10 @@ static hashkit_hash_algorithm_t get_function_type(const hashkit_hash_fn function
   else if (function == hashkit_jenkins)
   {
     return HASHKIT_HASH_JENKINS;
+  }
+  else if (function == hashkit_fnv1a_compat)
+  {
+    return HASHKIT_HASH_FNV1A_COMPAT;
   }
 
   return HASHKIT_HASH_CUSTOM;

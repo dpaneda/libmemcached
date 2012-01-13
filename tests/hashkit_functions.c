@@ -285,8 +285,21 @@ static test_return_t jenkins_run (hashkit_st *hashk __attribute__((unused)))
   return TEST_SUCCESS;
 }
 
+static test_return_t fnv1a_compat_run (hashkit_st *hashk __attribute__((unused)))
+{
+  uint32_t x;
+  const char **ptr;
 
+  for (ptr= list_to_hash, x= 0; *ptr; ptr++, x++)
+  {
+    uint32_t hash_val;
 
+    hash_val= libhashkit_fnv1a_compat(*ptr, strlen(*ptr));
+    assert(fnv1a_compat_values[x] == hash_val);
+  }
+
+  return TEST_SUCCESS;
+}
 
 /**
   @brief now we list out the tests.
@@ -358,6 +371,9 @@ static test_return_t hashkit_set_function_test(hashkit_st *hashk)
       break;
     case HASHKIT_HASH_JENKINS:
       list= jenkins_values;
+      break;
+    case HASHKIT_HASH_FNV1A_COMPAT:
+      list= fnv1a_compat_values;
       break;
     case HASHKIT_HASH_CUSTOM:
     case HASHKIT_HASH_MAX:
@@ -512,6 +528,7 @@ test_st hash_tests[] ={
   {"hsieh", 0, (test_callback_fn)hsieh_run },
   {"murmur", 0, (test_callback_fn)murmur_run },
   {"jenkis", 0, (test_callback_fn)jenkins_run },
+  {"fnv1a_compat", 0, (test_callback_fn)fnv1a_compat_run },
   {0, 0, (test_callback_fn)0}
 };
 

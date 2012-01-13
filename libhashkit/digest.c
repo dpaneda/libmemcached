@@ -41,6 +41,8 @@ uint32_t libhashkit_digest(const char *key, size_t key_length, hashkit_hash_algo
     return libhashkit_murmur(key, key_length);
   case HASHKIT_HASH_JENKINS:
     return libhashkit_jenkins(key, key_length);
+  case HASHKIT_HASH_FNV1A_COMPAT:
+    return libhashkit_fnv1a_compat(key, key_length);
   case HASHKIT_HASH_CUSTOM:
   case HASHKIT_HASH_MAX:
   default:

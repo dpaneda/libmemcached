@@ -3744,6 +3744,13 @@ static test_return_t pre_hash_fnv1a_32(memcached_st *memc)
   return TEST_SUCCESS;
 }
 
+static test_return_t pre_hash_fnv1a_compat(memcached_st *memc)
+{
+  memcached_behavior_set(memc, MEMCACHED_BEHAVIOR_HASH, (uint64_t)MEMCACHED_HASH_FNV1A_COMPAT);
+
+  return TEST_SUCCESS;
+}
+
 static test_return_t pre_behavior_ketama(memcached_st *memc)
 {
   memcached_return_t rc;
@@ -4995,6 +5002,23 @@ static test_return_t fnv1a_32_run (memcached_st *memc __attribute__((unused)))
 
   return TEST_SUCCESS;
 }
+
+static test_return_t fnv1a_compat_run (memcached_st *memc __attribute__((unused)))
+{
+  uint32_t x;
+  const char **ptr;
+
+  for (ptr= list_to_hash, x= 0; *ptr; ptr++, x++)
+  {
+    uint32_t hash_val;
+
+    hash_val= memcached_generate_hash_value(*ptr, strlen(*ptr), MEMCACHED_HASH_FNV1A_COMPAT);
+    test_true(fnv1a_compat_values[x] == hash_val);
+  }
+
+  return TEST_SUCCESS;
+}
+
 
 static test_return_t hsieh_run (memcached_st *memc __attribute__((unused)))
 {
@@ -6429,6 +6453,7 @@ test_st hash_tests[] ={
   {"fnv1a_64", 0, (test_callback_fn)fnv1a_64_run },
   {"fnv1_32", 0, (test_callback_fn)fnv1_32_run },
   {"fnv1a_32", 0, (test_callback_fn)fnv1a_32_run },
+  {"fnv1a_compat", 0, (test_callback_fn)fnv1a_compat_run },
   {"hsieh", 0, (test_callback_fn)hsieh_run },
   {"murmur", 0, (test_callback_fn)murmur_run },
   {"jenkis", 0, (test_callback_fn)jenkins_run },
@@ -6464,6 +6489,7 @@ collection_st collection[] ={
   {"fnv1a_64", (test_callback_fn)pre_hash_fnv1a_64, 0, tests},
   {"fnv1_32", (test_callback_fn)pre_hash_fnv1_32, 0, tests},
   {"fnv1a_32", (test_callback_fn)pre_hash_fnv1a_32, 0, tests},
+  {"fnv1a_compat", (test_callback_fn)pre_hash_fnv1a_compat, 0, tests},
   {"ketama", (test_callback_fn)pre_behavior_ketama, 0, tests},
   {"ketama_auto_eject_hosts", (test_callback_fn)pre_behavior_ketama, 0, ketama_auto_eject_hosts},
   {"unix_socket", (test_callback_fn)pre_unix_socket, 0, tests},

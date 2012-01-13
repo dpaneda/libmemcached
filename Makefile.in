@@ -218,7 +218,8 @@ clients_libutilities_la_OBJECTS =  \
 libhashkit_libhashkit_la_LIBADD =
 am__libhashkit_libhashkit_la_SOURCES_DIST = libhashkit/algorithm.c \
 	libhashkit/behavior.c libhashkit/crc32.c libhashkit/fnv.c \
-	libhashkit/digest.c libhashkit/function.c libhashkit/hashkit.c \
+	libhashkit/fnv_compat.c libhashkit/digest.c \
+	libhashkit/function.c libhashkit/hashkit.c \
 	libhashkit/jenkins.c libhashkit/ketama.c libhashkit/md5.c \
 	libhashkit/murmur.c libhashkit/one_at_a_time.c \
 	libhashkit/strerror.c libhashkit/hsieh.c
@@ -228,6 +229,7 @@ am_libhashkit_libhashkit_la_OBJECTS =  \
 	libhashkit/libhashkit_libhashkit_la-behavior.lo \
 	libhashkit/libhashkit_libhashkit_la-crc32.lo \
 	libhashkit/libhashkit_libhashkit_la-fnv.lo \
+	libhashkit/libhashkit_libhashkit_la-fnv_compat.lo \
 	libhashkit/libhashkit_libhashkit_la-digest.lo \
 	libhashkit/libhashkit_libhashkit_la-function.lo \
 	libhashkit/libhashkit_libhashkit_la-hashkit.lo \
@@ -247,7 +249,8 @@ libhashkit_libhashkit_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 libhashkit_libhashkitinc_la_LIBADD =
 am__libhashkit_libhashkitinc_la_SOURCES_DIST = libhashkit/algorithm.c \
 	libhashkit/behavior.c libhashkit/crc32.c libhashkit/fnv.c \
-	libhashkit/digest.c libhashkit/function.c libhashkit/hashkit.c \
+	libhashkit/fnv_compat.c libhashkit/digest.c \
+	libhashkit/function.c libhashkit/hashkit.c \
 	libhashkit/jenkins.c libhashkit/ketama.c libhashkit/md5.c \
 	libhashkit/murmur.c libhashkit/one_at_a_time.c \
 	libhashkit/strerror.c libhashkit/hsieh.c
@@ -256,6 +259,7 @@ am__objects_3 = libhashkit/libhashkit_libhashkitinc_la-algorithm.lo \
 	libhashkit/libhashkit_libhashkitinc_la-behavior.lo \
 	libhashkit/libhashkit_libhashkitinc_la-crc32.lo \
 	libhashkit/libhashkit_libhashkitinc_la-fnv.lo \
+	libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo \
 	libhashkit/libhashkit_libhashkitinc_la-digest.lo \
 	libhashkit/libhashkit_libhashkitinc_la-function.lo \
 	libhashkit/libhashkit_libhashkitinc_la-hashkit.lo \
@@ -982,7 +986,8 @@ clients_memcapable_SOURCES = clients/memcapable.c
 @BUILD_BYTEORDER_TRUE@clients_memcapable_LDADD = libmemcached/libbyteorder.la
 libhashkit_libhashkit_la_SOURCES = libhashkit/algorithm.c \
 	libhashkit/behavior.c libhashkit/crc32.c libhashkit/fnv.c \
-	libhashkit/digest.c libhashkit/function.c libhashkit/hashkit.c \
+	libhashkit/fnv_compat.c libhashkit/digest.c \
+	libhashkit/function.c libhashkit/hashkit.c \
 	libhashkit/jenkins.c libhashkit/ketama.c libhashkit/md5.c \
 	libhashkit/murmur.c libhashkit/one_at_a_time.c \
 	libhashkit/strerror.c $(am__append_15)
@@ -1215,6 +1220,9 @@ libhashkit/libhashkit_libhashkit_la-crc32.lo:  \
 libhashkit/libhashkit_libhashkit_la-fnv.lo:  \
 	libhashkit/$(am__dirstamp) \
 	libhashkit/$(DEPDIR)/$(am__dirstamp)
+libhashkit/libhashkit_libhashkit_la-fnv_compat.lo:  \
+	libhashkit/$(am__dirstamp) \
+	libhashkit/$(DEPDIR)/$(am__dirstamp)
 libhashkit/libhashkit_libhashkit_la-digest.lo:  \
 	libhashkit/$(am__dirstamp) \
 	libhashkit/$(DEPDIR)/$(am__dirstamp)
@@ -1257,6 +1265,9 @@ libhashkit/libhashkit_libhashkitinc_la-crc32.lo:  \
 	libhashkit/$(am__dirstamp) \
 	libhashkit/$(DEPDIR)/$(am__dirstamp)
 libhashkit/libhashkit_libhashkitinc_la-fnv.lo:  \
+	libhashkit/$(am__dirstamp) \
+	libhashkit/$(DEPDIR)/$(am__dirstamp)
+libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo:  \
 	libhashkit/$(am__dirstamp) \
 	libhashkit/$(DEPDIR)/$(am__dirstamp)
 libhashkit/libhashkit_libhashkitinc_la-digest.lo:  \
@@ -1682,6 +1693,8 @@ mostlyclean-compile:
 	-rm -f libhashkit/libhashkit_libhashkit_la-digest.lo
 	-rm -f libhashkit/libhashkit_libhashkit_la-fnv.$(OBJEXT)
 	-rm -f libhashkit/libhashkit_libhashkit_la-fnv.lo
+	-rm -f libhashkit/libhashkit_libhashkit_la-fnv_compat.$(OBJEXT)
+	-rm -f libhashkit/libhashkit_libhashkit_la-fnv_compat.lo
 	-rm -f libhashkit/libhashkit_libhashkit_la-function.$(OBJEXT)
 	-rm -f libhashkit/libhashkit_libhashkit_la-function.lo
 	-rm -f libhashkit/libhashkit_libhashkit_la-hashkit.$(OBJEXT)
@@ -1710,6 +1723,8 @@ mostlyclean-compile:
 	-rm -f libhashkit/libhashkit_libhashkitinc_la-digest.lo
 	-rm -f libhashkit/libhashkit_libhashkitinc_la-fnv.$(OBJEXT)
 	-rm -f libhashkit/libhashkit_libhashkitinc_la-fnv.lo
+	-rm -f libhashkit/libhashkit_libhashkitinc_la-fnv_compat.$(OBJEXT)
+	-rm -f libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo
 	-rm -f libhashkit/libhashkit_libhashkitinc_la-function.$(OBJEXT)
 	-rm -f libhashkit/libhashkit_libhashkitinc_la-function.lo
 	-rm -f libhashkit/libhashkit_libhashkitinc_la-hashkit.$(OBJEXT)
@@ -1858,6 +1873,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-crc32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-digest.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-fnv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-fnv_compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-function.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-hashkit.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-hsieh.Plo@am__quote@
@@ -1872,6 +1888,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-crc32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-digest.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-fnv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-fnv_compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-function.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-hashkit.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-hsieh.Plo@am__quote@
@@ -1995,6 +2012,14 @@ libhashkit/libhashkit_libhashkit_la-fnv.lo: libhashkit/fnv.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkit_la_CFLAGS) $(CFLAGS) -c -o libhashkit/libhashkit_libhashkit_la-fnv.lo `test -f 'libhashkit/fnv.c' || echo '$(srcdir)/'`libhashkit/fnv.c
 
+libhashkit/libhashkit_libhashkit_la-fnv_compat.lo: libhashkit/fnv_compat.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkit_la_CFLAGS) $(CFLAGS) -MT libhashkit/libhashkit_libhashkit_la-fnv_compat.lo -MD -MP -MF libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-fnv_compat.Tpo -c -o libhashkit/libhashkit_libhashkit_la-fnv_compat.lo `test -f 'libhashkit/fnv_compat.c' || echo '$(srcdir)/'`libhashkit/fnv_compat.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-fnv_compat.Tpo libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-fnv_compat.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='libhashkit/fnv_compat.c' object='libhashkit/libhashkit_libhashkit_la-fnv_compat.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkit_la_CFLAGS) $(CFLAGS) -c -o libhashkit/libhashkit_libhashkit_la-fnv_compat.lo `test -f 'libhashkit/fnv_compat.c' || echo '$(srcdir)/'`libhashkit/fnv_compat.c
+
 libhashkit/libhashkit_libhashkit_la-digest.lo: libhashkit/digest.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkit_la_CFLAGS) $(CFLAGS) -MT libhashkit/libhashkit_libhashkit_la-digest.lo -MD -MP -MF libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-digest.Tpo -c -o libhashkit/libhashkit_libhashkit_la-digest.lo `test -f 'libhashkit/digest.c' || echo '$(srcdir)/'`libhashkit/digest.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-digest.Tpo libhashkit/$(DEPDIR)/libhashkit_libhashkit_la-digest.Plo
@@ -2106,6 +2131,14 @@ libhashkit/libhashkit_libhashkitinc_la-fnv.lo: libhashkit/fnv.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='libhashkit/fnv.c' object='libhashkit/libhashkit_libhashkitinc_la-fnv.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkitinc_la_CFLAGS) $(CFLAGS) -c -o libhashkit/libhashkit_libhashkitinc_la-fnv.lo `test -f 'libhashkit/fnv.c' || echo '$(srcdir)/'`libhashkit/fnv.c
+
+libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo: libhashkit/fnv_compat.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkitinc_la_CFLAGS) $(CFLAGS) -MT libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo -MD -MP -MF libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-fnv_compat.Tpo -c -o libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo `test -f 'libhashkit/fnv_compat.c' || echo '$(srcdir)/'`libhashkit/fnv_compat.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-fnv_compat.Tpo libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-fnv_compat.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='libhashkit/fnv_compat.c' object='libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkitinc_la_CFLAGS) $(CFLAGS) -c -o libhashkit/libhashkit_libhashkitinc_la-fnv_compat.lo `test -f 'libhashkit/fnv_compat.c' || echo '$(srcdir)/'`libhashkit/fnv_compat.c
 
 libhashkit/libhashkit_libhashkitinc_la-digest.lo: libhashkit/digest.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libhashkit_libhashkitinc_la_CFLAGS) $(CFLAGS) -MT libhashkit/libhashkit_libhashkitinc_la-digest.lo -MD -MP -MF libhashkit/$(DEPDIR)/libhashkit_libhashkitinc_la-digest.Tpo -c -o libhashkit/libhashkit_libhashkitinc_la-digest.lo `test -f 'libhashkit/digest.c' || echo '$(srcdir)/'`libhashkit/digest.c

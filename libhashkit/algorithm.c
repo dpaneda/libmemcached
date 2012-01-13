@@ -33,6 +33,11 @@ uint32_t libhashkit_fnv1a_32(const char *key, size_t key_length)
   return hashkit_fnv1a_32(key, key_length, NULL);
 }
 
+uint32_t libhashkit_fnv1a_compat(const char *key, size_t key_length)
+{
+  return hashkit_fnv1a_compat(key, key_length, NULL);
+}
+
 uint32_t libhashkit_crc32(const char *key, size_t key_length)
 {
   return hashkit_crc32(key, key_length, NULL);
