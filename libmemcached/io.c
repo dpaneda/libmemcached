@@ -304,9 +304,7 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
             /* fall through */
           default:
             {
-              if (! ((rc == MEMCACHED_TIMEOUT) && ptr->root->flags.use_udp)) {
-                memcached_quit_server(ptr, true);
-              }
+              memcached_quit_server(ptr, true);
               *nread= -1;
               return rc;
             }
