@@ -184,20 +184,25 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
     in the queue before we start our get.
 
     It might be optimum to bounce the connection if count > some number.
+
+    However, this cleanup makes imposible to do real prefetch of the keys, so we
+    avoid doing it when the flag mget_flush_old_results is true.
   */
-  for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
-  {
-    memcached_server_write_instance_st instance= memcached_server_instance_fetch(ptr, x);
-
-    if (memcached_server_response_count(instance))
+  if (ptr->flags.mget_flush_old_results) {
+    for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
     {
-      char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
+      memcached_server_write_instance_st instance= memcached_server_instance_fetch(ptr, x);
 
-      if (ptr->flags.no_block)
-        (void)memcached_io_write(instance, NULL, 0, true);
+      if (memcached_server_response_count(instance))
+      {
+        char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
 
-      while(memcached_server_response_count(instance))
-        (void)memcached_response(instance, buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, &ptr->result);
+        if (ptr->flags.no_block)
+          (void)memcached_io_write(instance, NULL, 0, true);
+
+        while(memcached_server_response_count(instance))
+          (void)memcached_response(instance, buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, &ptr->result);
+      }
     }
   }
 

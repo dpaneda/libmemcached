@@ -134,6 +134,10 @@ memcached_return_t memcached_behavior_set(memcached_st *ptr,
     ptr->flags.udp_always_flush= (uint32_t)data;
     memcached_quit(ptr);
     break;
+  case MEMCACHED_BEHAVIOR_MGET_FLUSH_OLD_RESULTS:
+    ptr->flags.mget_flush_old_results = (uint32_t)data;
+    memcached_quit(ptr);
+    break;
   case MEMCACHED_BEHAVIOR_VERIFY_KEY:
     if (ptr->flags.binary_protocol)
       return MEMCACHED_FAILURE;
@@ -278,7 +282,9 @@ uint64_t memcached_behavior_get(memcached_st *ptr,
     return ptr->flags.support_cas;
   case MEMCACHED_BEHAVIOR_CACHE_LOOKUPS:
     return ptr->flags.use_cache_lookups;
-  case MEMCACHED_BEHAVIOR_UDP_ALWAYS_FLUSH:
+  case MEMCACHED_BEHAVIOR_MGET_FLUSH_OLD_RESULTS:
+    return ptr->flags.mget_flush_old_results;
+   case MEMCACHED_BEHAVIOR_UDP_ALWAYS_FLUSH:
     return ptr->flags.udp_always_flush;
   case MEMCACHED_BEHAVIOR_NO_BLOCK:
     return ptr->flags.no_block;

@@ -89,6 +89,8 @@ struct memcached_st {
     // The code could be remove as soon as the memcached production servers
     // have a memcached version with this bug solved (probably 1.4.8)
     bool udp_always_flush:1;
+    // Whenever mget should flush old results on mget
+    bool mget_flush_old_results:1;
   } flags;
   memcached_server_distribution_t distribution;
   hashkit_st hashkit;
