@@ -388,12 +388,9 @@ static memcached_return_t simple_binary_mget(memcached_st *ptr,
 
     instance= memcached_server_instance_fetch(ptr, server_key);
 
-    if (memcached_server_response_count(instance) == 0)
-    {
-      rc= memcached_connect(instance);
-      if (rc != MEMCACHED_SUCCESS)
-        continue;
-    }
+    rc= memcached_connect(instance);
+    if (rc != MEMCACHED_SUCCESS)
+      continue;
 
     protocol_binary_request_getk request= {.bytes= {0}};
     request.message.header.request.magic= PROTOCOL_BINARY_REQ;
