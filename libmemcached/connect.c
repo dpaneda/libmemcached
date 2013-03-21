@@ -344,6 +344,8 @@ test_connect:
     }
   }
 
+  (void)set_socket_options(ptr);
+
   WATCHPOINT_ASSERT(ptr->fd != -1);
 
   return MEMCACHED_SUCCESS;
