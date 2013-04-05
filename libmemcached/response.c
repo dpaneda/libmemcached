@@ -343,6 +343,11 @@ static memcached_return_t binary_read_one_response(memcached_server_write_instan
   memcached_return_t rc;
   protocol_binary_response_header header;
 
+  if (ptr->root->flags.use_udp) {
+    // This is how we detect we are expecting a new UDP response
+    ptr->num_datagrams = 0;
+  }
+
   for (;;) 
   {
     if ((rc= memcached_safe_read(ptr, &header.bytes, sizeof(header.bytes))) != MEMCACHED_SUCCESS)

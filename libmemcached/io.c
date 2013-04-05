@@ -306,7 +306,7 @@ memcached_return_t memcached_io_read(memcached_server_write_instance_st ptr,
             {
               memcached_quit_server(ptr, true);
               *nread= -1;
-              return rc;
+              return MEMCACHED_UNKNOWN_READ_FAILURE;
             }
           }
         }
@@ -375,9 +375,15 @@ ssize_t memcached_io_udp_read(memcached_server_write_instance_st ptr, void *buf)
     return nread;
 
   struct udp_datagram_header_st *udp_header= (struct udp_datagram_header_st*) datagram;
-  
-  if (ntohs(udp_header->sequence_number) == 0)
-  {   
+
+  if ((ptr->num_datagrams == 0)) {
+    // This is how we detect we are ready to a new request_id. Only acceptable
+    // data here is a new request_id
+
+    if (ntohs(udp_header->sequence_number) != 0) {
+      return -1;
+    }
+
     ptr->seq_number= 0;
     ptr->num_datagrams= ntohs(udp_header->num_datagrams);
     ptr->request_id= ntohs(udp_header->request_id);
