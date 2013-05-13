@@ -95,6 +95,9 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
     memcached_string_reset(&result->value);
   }
 
+  // We read all the results, flush all pending operations
+  memcached_flush_results(ptr);
+
   return NULL;
 }
 

@@ -126,6 +126,24 @@ char *memcached_get_by_key(memcached_st *ptr,
   return value;
 }
 
+void memcached_flush_results(memcached_st *ptr) {
+  for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
+  {
+    memcached_server_write_instance_st instance= memcached_server_instance_fetch(ptr, x);
+
+    if (memcached_server_response_count(instance))
+    {
+      char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
+
+      if (ptr->flags.no_block)
+        (void)memcached_io_write(instance, NULL, 0, true);
+
+      while(memcached_server_response_count(instance))
+        (void)memcached_response(instance, buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, &ptr->result);
+    }
+  }
+}
+
 memcached_return_t memcached_mget(memcached_st *ptr,
                                   const char * const *keys,
                                   const size_t *key_length,
@@ -177,33 +195,6 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
       return MEMCACHED_BAD_KEY_PROVIDED;
     master_server_key= memcached_generate_hash_with_redistribution(ptr, master_key, master_key_length);
     is_master_key_set= true;
-  }
-
-  /*
-    Here is where we pay for the non-block API. We need to remove any data sitting
-    in the queue before we start our get.
-
-    It might be optimum to bounce the connection if count > some number.
-
-    However, this cleanup makes imposible to do real prefetch of the keys, so we
-    avoid doing it when the flag mget_flush_old_results is true.
-  */
-  if (ptr->flags.mget_flush_old_results) {
-    for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
-    {
-      memcached_server_write_instance_st instance= memcached_server_instance_fetch(ptr, x);
-
-      if (memcached_server_response_count(instance))
-      {
-        char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
-
-        if (ptr->flags.no_block)
-          (void)memcached_io_write(instance, NULL, 0, true);
-
-        while(memcached_server_response_count(instance))
-          (void)memcached_response(instance, buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, &ptr->result);
-      }
-    }
   }
 
   if (ptr->flags.binary_protocol)

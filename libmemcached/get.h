@@ -25,6 +25,9 @@ char *memcached_get(memcached_st *ptr,
                     memcached_return_t *error);
 
 LIBMEMCACHED_API
+void memcached_flush_results(memcached_st *ptr);
+
+LIBMEMCACHED_API
 memcached_return_t memcached_mget(memcached_st *ptr,
                                   const char * const *keys,
                                   const size_t *key_length,
