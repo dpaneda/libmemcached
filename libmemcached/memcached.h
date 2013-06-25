@@ -91,6 +91,8 @@ struct memcached_st {
     bool udp_always_flush:1;
     // Whenever mget should flush old results on mget
     bool mget_flush_old_results:1;
+    // Whether to include the port when hashing the hostname for consistent hasing
+    bool hash_port_consistent:1;
   } flags;
   memcached_server_distribution_t distribution;
   hashkit_st hashkit;
