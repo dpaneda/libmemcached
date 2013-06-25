@@ -247,7 +247,7 @@ static memcached_return_t update_continuum(memcached_st *ptr)
         char sort_host[MEMCACHED_MAX_HOST_SORT_LENGTH]= "";
         size_t sort_host_length;
 
-        if (list[host_index].port == MEMCACHED_DEFAULT_PORT)
+        if (!ptr->flags.hash_port_consistent || list[host_index].port == MEMCACHED_DEFAULT_PORT)
         {
           sort_host_length= (size_t) snprintf(sort_host, MEMCACHED_MAX_HOST_SORT_LENGTH,
                                               "%s-%u",

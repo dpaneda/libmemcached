@@ -37,7 +37,8 @@ static const memcached_st global_copy= {
     .tcp_keepalive= false,
     .check_opaque= false,
     .udp_always_flush= true,
-    .mget_flush_old_results= true
+    .mget_flush_old_results= true,
+    .hash_port_consistent= false
   }
 };
 
