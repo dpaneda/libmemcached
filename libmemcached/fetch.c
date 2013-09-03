@@ -64,18 +64,14 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
       return NULL;
 
   *error = MEMCACHED_END;
-  while ((server= memcached_io_get_readable_server(ptr)) != NULL) 
+  while ((server= memcached_io_get_readable_server(ptr)) != NULL)
   {
     char buffer[MEMCACHED_DEFAULT_COMMAND_SIZE];
     *error= memcached_response(server, buffer, sizeof(buffer), result);
 
-    if (ptr->flags.use_udp) {
-      if ((*error == MEMCACHED_UNKNOWN_READ_FAILURE) 
-          || *error == MEMCACHED_TIMEOUT)
-      {
-        // UDP error are cache misses
-        *error= MEMCACHED_NOTFOUND;
-      }
+    if ((ptr->flags.use_udp) && ((*error == MEMCACHED_UNKNOWN_READ_FAILURE) || *error == MEMCACHED_TIMEOUT))
+    {
+        break;
     }
 
     if (*error == MEMCACHED_SUCCESS)
