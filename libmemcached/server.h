@@ -53,6 +53,7 @@ struct memcached_server_st {
   char read_buffer[MEMCACHED_MAX_BUFFER];
   char write_buffer[MEMCACHED_MAX_BUFFER];
   char hostname[NI_MAXHOST];
+  char consistentid[NI_MAXHOST];
   // State data for read UDP datagrams
   uint16_t request_id;
   uint16_t seq_number;
@@ -107,13 +108,29 @@ memcached_return_t memcached_server_add_udp_with_weight(memcached_st *ptr,
                                                         in_port_t port,
                                                         uint32_t weight);
 LIBMEMCACHED_API
+memcached_return_t memcached_server_add_udp_with_consistentid(memcached_st *ptr,
+                                                        const char *hostname,
+                                                        in_port_t port,
+                                                        uint32_t weight,
+                                                        const char *consistentid);
+LIBMEMCACHED_API
 memcached_return_t memcached_server_add_unix_socket_with_weight(memcached_st *ptr,
                                                                 const char *filename,
                                                                 uint32_t weight);
 LIBMEMCACHED_API
+memcached_return_t memcached_server_add_unix_socket_with_consistentid(memcached_st *ptr,
+                                                                        const char *filename,
+                                                                        uint32_t weight,
+                                                                        const char *consistentid);
+LIBMEMCACHED_API
 memcached_return_t memcached_server_add_with_weight(memcached_st *ptr, const char *hostname,
                                                     in_port_t port,
                                                     uint32_t weight);
+LIBMEMCACHED_API
+memcached_return_t memcached_server_add_with_consistentid(memcached_st *ptr, const char *hostname,
+                                                            in_port_t port,
+                                                            uint32_t weight,
+                                                            const char *consistentid);
 
 /**
   Operations on Single Servers.

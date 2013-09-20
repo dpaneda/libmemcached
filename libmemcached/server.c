@@ -16,7 +16,8 @@
 
 static inline void _server_init(memcached_server_st *self, memcached_st *root,
                                 const char *hostname, in_port_t port,
-                                uint32_t weight, memcached_connection_t type)
+                                uint32_t weight, memcached_connection_t type,
+                                const char *consistentid)
 {
   self->options.sockaddr_inited= false;
   self->options.is_shutting_down= false;
@@ -62,6 +63,10 @@ static inline void _server_init(memcached_server_st *self, memcached_st *root,
     self->hostname[0]= 0;
   else
     strncpy(self->hostname, hostname, NI_MAXHOST - 1);
+  if (consistentid == NULL)
+    self->consistentid[0]= 0;
+  else
+    strncpy(self->consistentid, consistentid, NI_MAXHOST - 1);
 }
 
 static memcached_server_st *_server_create(memcached_server_st *self, const memcached_st *memc)
@@ -88,14 +93,15 @@ static memcached_server_st *_server_create(memcached_server_st *self, const memc
 memcached_server_st *memcached_server_create_with(memcached_st *memc,
                                                   memcached_server_write_instance_st self,
                                                   const char *hostname, in_port_t port,
-                                                  uint32_t weight, memcached_connection_t type)
+                                                  uint32_t weight, memcached_connection_t type,
+                                                  const char *consistentid)
 {
   self= _server_create(self, memc);
 
   if (self == NULL)
     return NULL;
 
-  _server_init(self, memc, hostname, port, weight, type);
+  _server_init(self, memc, hostname, port, weight, type, consistentid);
 
 
   if (type == MEMCACHED_CONNECTION_UDP)
@@ -142,7 +148,7 @@ memcached_server_st *memcached_server_clone(memcached_server_st *destination,
 
   destination= memcached_server_create_with(source->root, destination,
                                             source->hostname, source->port, source->weight,
-                                            source->type);
+                                            source->type, source->consistentid);
   if (destination != NULL)
   {
     destination->cached_errno= source->cached_errno;

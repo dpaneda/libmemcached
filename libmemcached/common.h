@@ -143,7 +143,8 @@ memcached_server_st *memcached_server_create_with(memcached_st *memc,
                                                   const char *hostname,
                                                   in_port_t port,
                                                   uint32_t weight,
-                                                  memcached_connection_t type);
+                                                  memcached_connection_t type,
+                                                  const char *consistentid);
 
 
 static inline memcached_return_t memcached_validate_key_length(size_t key_length, bool binary)

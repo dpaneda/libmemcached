@@ -13,11 +13,12 @@
 #include "common.h"
 
 memcached_server_list_st
-memcached_server_list_append_full(memcached_server_list_st ptr,
+memcached_server_list_append_with_consistentid(memcached_server_list_st ptr,
                                   const char *hostname, in_port_t port,
                                   uint32_t weight,
                                   memcached_return_t *error,
-                                  memcached_connection_t conn_type)
+                                  memcached_connection_t conn_type,
+                                  const char *consistentid)
 {
   uint32_t count;
   memcached_server_list_st new_host_list;
@@ -46,13 +47,26 @@ memcached_server_list_append_full(memcached_server_list_st ptr,
 
   /* TODO: Check return type */
   memcached_server_create_with(NULL, &new_host_list[count-1], 
-                                hostname, port, weight, conn_type);
+                                hostname, port, weight, conn_type,
+                                consistentid);
 
   /* Backwards compatibility hack */
   memcached_servers_set_count(new_host_list, count);
 
   *error= MEMCACHED_SUCCESS;
   return new_host_list;
+}
+
+memcached_server_list_st 
+memcached_server_list_append_full(memcached_server_list_st ptr,
+                                         const char *hostname, in_port_t port,
+                                         uint32_t weight,
+                                         memcached_return_t *error,
+                                         memcached_connection_t conn_type)
+{
+  return memcached_server_list_append_with_consistentid(ptr, hostname, port, 
+                                           weight, error, 
+                                           conn_type, NULL);
 }
 
 memcached_server_list_st 
