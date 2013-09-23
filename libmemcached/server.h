@@ -131,6 +131,9 @@ LIBMEMCACHED_API
 const char *memcached_server_error(memcached_server_instance_st ptr);
 
 
+LIBMEMCACHED_API
+void dump_continuum(memcached_st *ptr);
+
 
 #ifdef __cplusplus
 } // extern "C"

@@ -11,6 +11,8 @@
 
 #include "common.h"
 #include <math.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 /* Protoypes (static) */
 static memcached_return_t server_add(memcached_st *ptr, const char *hostname,
@@ -97,6 +99,29 @@ static int continuum_item_cmp(const void *t1, const void *t2)
     return 1;
   else
     return -1;
+}
+
+void dump_continuum(memcached_st *ptr)
+{
+  unsigned int i;
+  long tid= syscall(SYS_gettid);
+  char filename[256];
+  sprintf(filename, "/tmp/continuum.%ld.%d", tid, ptr->flags.use_udp);
+  FILE *f= fopen(filename, "w");
+  fprintf(f, "auto_eject_hosts %d\n", ptr->flags.auto_eject_hosts);
+  fprintf(f, "use_udp %d\n", ptr->flags.use_udp);
+  fprintf(f, "continuum_points_counter %u\n", ptr->continuum_points_counter);
+  fprintf(f, "continuum_count %u\n", ptr->continuum_count);
+  fprintf(f, "use_sort_hosts %d\n", ptr->flags.use_sort_hosts);
+  fprintf(f, "number_of_hosts %d\n", ptr->number_of_hosts);
+  fprintf(f, "===\n");
+  for (i= 0; i < ptr->continuum_points_counter; ++i)
+  {
+    unsigned int idx = ptr->continuum[i].index;
+    fprintf(f, "%u %u %s\n", ptr->continuum[i].value, idx, ptr->servers[idx].hostname);
+  }
+  fprintf(f, "===\n");
+  fclose(f);
 }
 
 static memcached_return_t update_continuum(memcached_st *ptr)
