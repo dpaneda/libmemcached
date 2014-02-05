@@ -127,6 +127,11 @@ char *memcached_get_by_key(memcached_st *ptr,
 }
 
 void memcached_flush_results(memcached_st *ptr) {
+  int old_timeout = ptr->poll_timeout;
+  if (ptr->flags.check_opaque) {
+    ptr->poll_timeout = 0;
+  }
+
   for (uint32_t x= 0; x < memcached_server_count(ptr); x++)
   {
     memcached_server_write_instance_st instance= memcached_server_instance_fetch(ptr, x);
@@ -141,6 +146,10 @@ void memcached_flush_results(memcached_st *ptr) {
       while(memcached_server_response_count(instance))
         (void)memcached_response(instance, buffer, MEMCACHED_DEFAULT_COMMAND_SIZE, &ptr->result);
     }
+  }
+
+  if (ptr->flags.check_opaque) {
+    ptr->poll_timeout = old_timeout;
   }
 }
 
