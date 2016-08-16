@@ -56,10 +56,9 @@ memcached_return_t memcached_response(memcached_server_write_instance_st ptr,
   /*
    * The previous implementation purged all pending requests and just
    * returned the last one. Purge all pending messages to ensure backwards
-   * compatibility. But this breaks prefetching, so we only make it when
-   * mget_flush_old_results is true.
-   */
-  if ((ptr->root->flags.mget_flush_old_results) && (ptr->root->flags.binary_protocol == false))
+   * compatibility.
+ */
+  if (ptr->root->flags.binary_protocol == false)
     while (memcached_server_response_count(ptr) > 1)
     {
       memcached_return_t rc= memcached_read_one_response(ptr, buffer, buffer_length, result);

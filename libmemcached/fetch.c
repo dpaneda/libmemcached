@@ -76,7 +76,9 @@ memcached_result_st *memcached_fetch_result(memcached_st *ptr,
 
     if (*error == MEMCACHED_SUCCESS)
       return result;
-    else if ((*error != MEMCACHED_NOTFOUND) && (*error != MEMCACHED_END))
+    else if (*error == MEMCACHED_END)
+      memcached_server_response_reset(server);
+    else if (*error != MEMCACHED_NOTFOUND)
       break;
     *error = MEMCACHED_END;
   }

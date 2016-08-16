@@ -247,19 +247,18 @@ static memcached_return_t memcached_mget_by_key_real(memcached_st *ptr,
     };  
 
 
-    rc= memcached_connect(instance);
-
-    if (rc != MEMCACHED_SUCCESS)
-      continue;
-
-    if (x == 0)
+    if (memcached_server_response_count(instance) == 0)
     {
+      rc= memcached_connect(instance);
+
+      if (rc != MEMCACHED_SUCCESS)
+        continue;
+
       if ((memcached_io_writev(instance, vector, 4, false)) == -1)
       {
         rc= MEMCACHED_SOME_ERRORS;
         continue;
       }
-
       if (!ptr->flags.check_opaque)
       {
         WATCHPOINT_ASSERT(instance->cursor_active == 0);
